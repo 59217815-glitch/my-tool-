@@ -1,0 +1,2489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#07070a">
+<link rel="icon" href="data:,">
+<title>胶片相机</title>
+<style>
+  :root{
+    --body:#3a3540; --body2:#57515f; --accent:#e8b04b; --ink:#efe9df; --shutter:#c9483b;
+    --plate-font:'Times New Roman', Georgia, serif;
+    --panel:#131317; --card:#1c1c22; --line:#2e2e38; --dim:#8b8b96;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;height:100vh;height:-webkit-fill-available;height:100dvh;
+    overflow:hidden;background:#06060a;color:#efece6;
+    font:14px/1.4 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
+    display:flex;flex-direction:column;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  /* ================= 机身 ================= */
+  .cam{
+    flex:1 1 auto;min-height:0;margin:6px;border-radius:18px;position:relative;
+    display:flex;flex-direction:column;
+    background:linear-gradient(172deg,var(--body2) 0%,var(--body) 26%,#08080a 118%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.18),
+      inset 0 -2px 8px rgba(0,0,0,.55),
+      0 22px 50px rgba(0,0,0,.6);
+    overflow:hidden;
+  }
+  .cam::before{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.55;
+  }
+  .cam.grip-leather::before{
+    background-image:
+      repeating-linear-gradient(38deg,rgba(255,255,255,.09) 0 1px,transparent 1px 3px),
+      repeating-linear-gradient(-38deg,rgba(0,0,0,.34) 0 1px,transparent 1px 3px);
+    opacity:.85;
+  }
+  .cam.grip-metal::before{
+    background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.10) 0 1px,transparent 1px 4px);
+    opacity:.35;
+  }
+  .cam.grip-plastic::before{opacity:0}
+  .cam.grip-wood::before{
+    background-image:repeating-linear-gradient(92deg,rgba(255,255,255,.06) 0 2px,transparent 2px 7px);
+    opacity:.4;
+  }
+
+  /* ================= 金属顶盖 ================= */
+  .lid{
+    position:relative;z-index:3;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:space-between;
+    gap:10px;padding:11px 16px 10px;
+    background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.02) 48%,rgba(0,0,0,.32));
+    border-bottom:1px solid rgba(0,0,0,.6);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
+  }
+  .lid::after{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px);
+  }
+  .plate{
+    position:relative;z-index:1;display:flex;flex-direction:column;gap:2px;
+    min-width:0;flex:1;align-items:flex-start;
+  }
+  .plate b{
+    font-family:var(--plate-font);font-weight:600;font-size:16px;letter-spacing:.17em;
+    color:var(--ink);line-height:1;
+    text-shadow:0 1px 0 rgba(255,255,255,.22), 0 -1px 1px rgba(0,0,0,.75);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .plate small{
+    font-size:8.5px;letter-spacing:.22em;color:var(--ink);opacity:.52;line-height:1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .topright{
+    position:relative;z-index:1;display:flex;align-items:center;gap:9px;flex:0 0 auto;
+  }
+  .counter{
+    width:46px;height:27px;border-radius:5px;background:#110d08;
+    border:1px solid rgba(255,255,255,.13);
+    box-shadow:inset 0 2px 7px rgba(0,0,0,.95), inset 0 -1px 0 rgba(255,255,255,.07);
+    display:grid;place-items:center;
+    font:600 15px/1 ui-monospace,"Courier New",monospace;letter-spacing:.09em;
+    color:#f3b94c;text-shadow:0 0 9px rgba(243,185,76,.55);
+  }
+  .counter.low{color:#e8604c;text-shadow:0 0 9px rgba(232,96,76,.6)}
+  .lensbtn{
+    width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.16);
+    background:radial-gradient(circle at 34% 28%,#4a4854,#1b1b21 70%);
+    box-shadow:0 2px 6px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.22);
+    color:#cfcac2;font-size:13px;display:grid;place-items:center;padding:0;
+  }
+  .lensbtn:active{transform:scale(.94)}
+
+  /* ================= 横构图取景窗 ================= */
+  .vf-zone{
+    position:relative;z-index:2;flex:1 1 auto;min-height:0;
+    display:flex;flex-direction:column;align-items:center;
+    justify-content:flex-start;gap:10px;padding:13px 0 0;
+  }
+  .windows{
+    width:calc(100% - 40px);display:flex;align-items:center;gap:9px;padding:0 3px;
+  }
+  .w-rf{
+    width:13px;height:13px;border-radius:50%;flex:0 0 auto;
+    background:radial-gradient(circle at 36% 30%,#8291a0,#0c1116 72%);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.24), 0 1px 3px rgba(0,0,0,.7);
+  }
+  .w-view{
+    width:17px;height:10px;border-radius:2px;flex:0 0 auto;
+    background:radial-gradient(ellipse at 40% 30%,#495359,#0a0d10 72%);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.18), 0 1px 3px rgba(0,0,0,.7);
+  }
+  .windows .gap{flex:1}
+  .w-led{
+    width:7px;height:7px;border-radius:50%;flex:0 0 auto;
+    background:#2a0f0c;
+    box-shadow:inset 0 0 2px #000, 0 0 0 1px rgba(255,255,255,.1);
+  }
+  .vf-shell{
+    width:calc(100% - 38px);padding:8px;border-radius:6px;
+    background:linear-gradient(160deg,var(--body2) 0%,var(--body) 46%,#000 96%);
+    box-shadow:
+      0 6px 18px rgba(0,0,0,.62),
+      inset 0 1.5px 0 rgba(255,255,255,.28),
+      inset 0 -2px 6px rgba(0,0,0,.7);
+  }
+  .vf{
+    position:relative;width:100%;aspect-ratio:3/2;border-radius:2px;
+    overflow:hidden;background:#000;isolation:isolate;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.09), inset 0 0 24px rgba(0,0,0,.9);
+  }
+  #video{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    opacity:0;transition:opacity .45s, filter .25s;background:#000;
+  }
+  #video.on{opacity:1}
+  /* 取景器实时胶片色：暗角 + 色偏 + 颗粒 */
+  .vf-grade{position:absolute;inset:0;z-index:2;pointer-events:none}
+  .vf-grain{
+    position:absolute;inset:-12px;z-index:3;pointer-events:none;opacity:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='n'/%3E%3C/svg%3E");
+    background-size:160px 160px;
+    mix-blend-mode:overlay;
+    animation:grainShift .6s steps(4) infinite;
+  }
+  @keyframes grainShift{
+    0%{background-position:0 0}
+    25%{background-position:-30px 20px}
+    50%{background-position:24px -26px}
+    75%{background-position:-18px -14px}
+    100%{background-position:0 0}
+  }
+  .vf-mask{position:absolute;inset:0;pointer-events:none;z-index:4}
+  .corner{position:absolute;width:15px;height:15px;border:0 solid rgba(255,255,255,.5)}
+  .corner.tl{top:7px;left:7px;border-top-width:1.5px;border-left-width:1.5px}
+  .corner.tr{top:7px;right:7px;border-top-width:1.5px;border-right-width:1.5px}
+  .corner.bl{bottom:7px;left:7px;border-bottom-width:1.5px;border-left-width:1.5px}
+  .corner.br{bottom:7px;right:7px;border-bottom-width:1.5px;border-right-width:1.5px}
+  .cross{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;opacity:.45}
+  .cross::before,.cross::after{content:'';position:absolute;background:rgba(255,255,255,.85)}
+  .cross::before{left:50%;top:0;width:1px;height:100%;margin-left:-.5px}
+  .cross::after{top:50%;left:0;height:1px;width:100%;margin-top:-.5px}
+  .focus{
+    position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;
+    border:1.5px solid var(--accent);opacity:0;border-radius:2px;
+    box-shadow:0 0 10px rgba(0,0,0,.6);
+  }
+  .focus.on{animation:focusIn .9s ease-out}
+  @keyframes focusIn{
+    0%{opacity:0;transform:scale(1.3)}
+    18%{opacity:1;transform:scale(1)}
+    70%{opacity:1;transform:scale(1)}
+    100%{opacity:0;transform:scale(1.05)}
+  }
+  .vf-foot{
+    width:calc(100% - 40px);display:flex;align-items:center;justify-content:space-between;
+    gap:10px;padding:0 3px;
+    font:600 9px/1 ui-monospace,"Courier New",monospace;letter-spacing:.13em;
+    color:var(--ink);opacity:.55;text-shadow:0 1px 0 rgba(0,0,0,.8);
+  }
+  .vf-foot span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .vf-foot .r{opacity:.75}
+  .belly{
+    margin:auto 0 30px;display:flex;flex-direction:column;align-items:center;gap:8px;
+    padding:0 20px;text-align:center;max-width:100%;
+  }
+  .belly::before{
+    content:'';width:58px;height:1px;margin-bottom:2px;
+    background:rgba(0,0,0,.42);
+    box-shadow:0 1px 0 rgba(255,255,255,.16);
+  }
+  .belly-brand{
+    font-family:var(--plate-font);font-weight:600;font-size:23px;letter-spacing:.3em;
+    color:rgba(0,0,0,.32);
+    text-shadow:0 1px 0 rgba(255,255,255,.22), 0 -1px 1px rgba(0,0,0,.34);
+    white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;
+  }
+  .belly-sub{
+    font:600 8px/1 ui-monospace,"Courier New",monospace;letter-spacing:.3em;
+    color:var(--ink);opacity:.26;
+  }
+
+  /* 未开启取景 */
+  .idle{
+    position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:9px;text-align:center;padding:14px;
+    background:radial-gradient(circle at 50% 42%,#1a1a20,#05050a 78%);
+  }
+  .idle.hide{display:none}
+  .idle p{margin:0;color:#8f8f99;font-size:11px;letter-spacing:.08em}
+  .idle .go{
+    background:var(--accent);color:#1a1408;border:0;border-radius:999px;
+    padding:10px 24px;font-size:13px;font-weight:600;letter-spacing:.04em;
+    box-shadow:0 6px 18px rgba(0,0,0,.5);
+  }
+  .idle .go:active{transform:scale(.97)}
+  .idle a{color:#767682;font-size:10.5px;text-decoration:underline;text-underline-offset:3px}
+
+  .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:9}
+  .flash.on{animation:fl .28s ease-out}
+  @keyframes fl{0%{opacity:0}8%{opacity:.85}100%{opacity:0}}
+
+  .warn{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:7;
+    background:rgba(20,20,26,.94);border:1px solid var(--line);border-radius:12px;
+    padding:14px 18px;font-size:12.5px;color:#d9d6cf;max-width:78%;text-align:center;
+    display:none;
+  }
+
+  /* ================= 横向波轮 ================= */
+  .wheel-zone{position:relative;z-index:2;flex:0 0 auto;padding:0 15px}
+  .wheel-head{display:flex;align-items:center;justify-content:space-between;padding:0 3px 5px}
+  .wheel-head span{font-size:7px;letter-spacing:.28em;color:var(--ink);opacity:.4}
+  .labbtn{
+    background:none;border:0;padding:0;color:var(--ink);opacity:.5;font-family:inherit;
+    font-size:9px;letter-spacing:.14em;text-decoration:underline;text-underline-offset:3px;
+  }
+  .wheel-shell{
+    position:relative;display:flex;align-items:center;height:58px;border-radius:9px;
+    padding:0 1px;overflow:hidden;
+    background:linear-gradient(180deg,#040406,#232126 12%,#0b0b0e 84%,#000);
+    box-shadow:
+      inset 0 7px 11px -7px rgba(0,0,0,.95),
+      inset 0 -7px 11px -7px rgba(0,0,0,.95),
+      0 1px 0 rgba(255,255,255,.13);
+  }
+  .wheel-shell::before,.wheel-shell::after{
+    content:'';position:absolute;left:16px;right:16px;height:5px;pointer-events:none;z-index:2;
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,.3) 0 1px,transparent 1px 8px);
+    opacity:.42;
+  }
+  .wheel-shell::before{top:3px}
+  .wheel-shell::after{bottom:3px}
+  .wnav{
+    flex:0 0 auto;width:26px;height:100%;border:0;background:none;padding:0;
+    color:var(--ink);opacity:.42;font-size:15px;line-height:1;z-index:3;
+  }
+  .wnav:active{opacity:.9}
+  .wheel{
+    flex:1 1 auto;min-width:0;height:100%;display:flex;
+    overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;
+    scrollbar-width:none;position:relative;z-index:1;
+  }
+  .wheel::-webkit-scrollbar{display:none}
+  .witem{
+    flex:0 0 100%;scroll-snap-align:center;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);padding:0 7px;
+  }
+  /* 每个胶卷 = 一个会转的胶卷罐 + 一段走片 */
+  .roll{display:flex;align-items:center;gap:7px;width:100%;max-width:100%}
+  .can{
+    --rot:0deg;--can:#e8b04b;
+    position:relative;flex:0 0 auto;width:25px;height:42px;border-radius:4px;
+    background:
+      linear-gradient(90deg,rgba(0,0,0,.62),rgba(255,255,255,.05) 22%,rgba(255,255,255,.16) 44%,rgba(255,255,255,.03) 66%,rgba(0,0,0,.62)),
+      linear-gradient(90deg,#26262e,#54545e 28%,#3b3b44 68%,#1b1b21);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.24),
+      inset 0 -1px 0 rgba(0,0,0,.7),
+      0 2px 6px rgba(0,0,0,.55);
+    transform:rotate(var(--rot));
+  }
+  .can::before{
+    content:'';position:absolute;left:0;right:0;top:14px;bottom:14px;
+    background:var(--can);opacity:.88;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.45),
+      inset 0 -1px 0 rgba(0,0,0,.45),
+      inset -4px 0 6px -4px rgba(0,0,0,.5);
+  }
+  .can::after{
+    content:'';position:absolute;left:50%;top:2px;width:11px;height:8px;margin-left:-5.5px;
+    border-radius:2px;
+    background:linear-gradient(180deg,#57575f,#15151b);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 1px 2px rgba(0,0,0,.65);
+  }
+  .wstrip{
+    --shift:0px;
+    position:relative;flex:1 1 auto;min-width:0;height:33px;border-radius:2px;overflow:hidden;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+    padding:7px 5px;
+    background:
+      linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0) 42%),
+      linear-gradient(180deg,#151009,#0a0806);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);
+  }
+  /* 上下齿孔，随滚动一起走 */
+  .wstrip::before,.wstrip::after{
+    content:'';position:absolute;left:0;right:0;height:4px;pointer-events:none;
+    background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.5) 0 3px,transparent 3px 8px);
+    background-position:var(--shift) 0;
+  }
+  .wstrip::before{top:2px}
+  .wstrip::after{bottom:2px}
+  .wstrip b{
+    font-family:var(--plate-font);font-weight:600;font-size:11px;letter-spacing:.06em;
+    text-shadow:0 1px 2px rgba(0,0,0,.9);line-height:1;
+    max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .wstrip small{font-size:6px;letter-spacing:.14em;opacity:.42;line-height:1;white-space:nowrap}
+
+  /* ================= 底部：胶卷槽 + 快门 ================= */
+  .deck{
+    position:relative;z-index:2;flex:0 0 auto;
+    display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:11px 16px 13px;
+  }
+  .strip{
+    flex:1 1 auto;min-width:0;height:54px;position:relative;
+    display:flex;align-items:center;gap:5px;padding:0 7px;overflow-x:auto;
+    background:
+      repeating-linear-gradient(90deg,rgba(236,176,82,.22) 0 16px,transparent 16px 46px) left 0 bottom 7px/100% 1.5px no-repeat,
+      #08080b;
+    border-radius:3px;scrollbar-width:none;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .strip::-webkit-scrollbar{display:none}
+  .strip::before{
+    content:'';position:absolute;left:0;right:0;top:0;height:5px;pointer-events:none;z-index:2;
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,.15) 0 5px,transparent 5px 12px);
+  }
+  .strip::after{
+    content:'';position:absolute;left:0;right:0;bottom:0;height:5px;pointer-events:none;z-index:2;
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,.15) 0 5px,transparent 5px 12px);
+  }
+  .thumb{
+    flex:0 0 auto;width:34px;height:34px;position:relative;padding:0;overflow:hidden;
+    border-radius:1px;border:1px solid rgba(255,255,255,.14);background:#151519;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .thumb img{display:block;width:100%;height:100%;object-fit:cover;transition:opacity .2s}
+  .thumb i{
+    position:absolute;right:0;top:0;width:12px;height:12px;font-style:normal;
+    background:var(--accent);color:#1a1408;font-size:9px;line-height:12px;text-align:center;
+    font-weight:700;opacity:0;transform:scale(.6);transition:.15s;
+  }
+  .thumb.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+  .thumb.sel i{opacity:1;transform:none}
+  .thumb.saved img{opacity:.55}
+  .thumb.saved::after{
+    content:'✓';position:absolute;left:2px;bottom:1px;font-size:8px;color:#8ee0a8;
+  }
+  .strip-empty{
+    font-size:8px;letter-spacing:.16em;color:#46464f;padding-left:2px;white-space:nowrap;
+  }
+  /* 挑片条：拍完之后在这里挑哪些留 */
+  .pickbar{
+    display:none;order:3;flex:0 0 100%;align-items:center;justify-content:space-between;
+    gap:8px;padding:7px 8px;border-radius:9px;
+    background:linear-gradient(180deg,#1a1a20,#121216);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .pickbar.on{display:flex}
+  .pickbar span{font-size:9.5px;letter-spacing:.06em;color:var(--ink);opacity:.62;white-space:nowrap}
+  .pickbar .pk-actions{display:flex;gap:6px}
+  .pickbar button{
+    padding:6px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.12);
+    background:#232329;color:#e0dcd4;font-size:10.5px;font-family:inherit;white-space:nowrap;
+  }
+  .pickbar button.primary{background:var(--accent);border-color:var(--accent);color:#1a1408;font-weight:600}
+  .pickbar button:disabled{opacity:.34}
+  .shutter{
+    flex:0 0 auto;width:60px;height:60px;border-radius:50%;border:0;padding:0;
+    position:relative;display:grid;place-items:center;
+    background:radial-gradient(circle at 36% 28%,#ff6d5f,var(--shutter) 56%,#631c17);
+    box-shadow:
+      0 5px 14px rgba(0,0,0,.6),
+      inset 0 2px 4px rgba(255,255,255,.42),
+      inset 0 -6px 12px rgba(0,0,0,.45);
+    transition:transform .1s, box-shadow .1s;
+  }
+  .shutter::after{
+    content:'';position:absolute;inset:-8px;border-radius:50%;pointer-events:none;
+    border:1.5px solid rgba(255,255,255,.1);
+  }
+  .shutter i{display:block;width:20px;height:20px;border-radius:50%;
+    background:radial-gradient(circle at 40% 34%,rgba(255,255,255,.55),rgba(0,0,0,.18) 78%);
+    box-shadow:inset 0 0 5px rgba(0,0,0,.4)}
+  .shutter:active{transform:translateY(2px) scale(.96);
+    box-shadow:0 2px 5px rgba(0,0,0,.5), inset 0 4px 9px rgba(0,0,0,.5)}
+
+  /* ================= 横屏：完整相机形态 ================= */
+  @media (orientation: landscape){
+    .cam{
+      --rail:clamp(188px, 20vw, 250px);
+      display:grid;
+      grid-template-columns:minmax(0,1fr) var(--rail);
+      grid-template-rows:auto auto 1fr;
+      border-radius:16px;
+    }
+    .lid{
+      grid-column:2;grid-row:1;
+      flex-direction:row;align-items:center;gap:7px;
+      padding:9px 12px 8px;
+    }
+    .plate{flex:1 1 auto;width:auto}
+    .plate b{font-size:14px;letter-spacing:.12em}
+    .plate small{font-size:7.5px;letter-spacing:.15em}
+    .topright{gap:7px}
+    .counter{width:40px;height:24px;font-size:13px}
+    .lensbtn{width:26px;height:26px;font-size:12px}
+    .vf-zone{
+      grid-column:1;grid-row:1 / span 3;
+      justify-content:center;gap:7px;padding:8px 5px 8px 10px;
+    }
+    .windows,.belly{display:none}
+    .vf{
+      width:min(calc(100vw - var(--rail) - 27px - env(safe-area-inset-left) - env(safe-area-inset-right)),
+                calc((100vh - 60px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 1.5));
+      height:auto;
+    }
+    .vf-shell{
+      width:auto;height:auto;display:flex;padding:7px;align-self:center;
+    }
+    .vf-foot{width:auto;padding:0 4px}
+    .wheel-zone{
+      grid-column:2;grid-row:2;
+      display:flex;flex-direction:column;justify-content:flex-start;
+      padding:7px 12px 0;
+    }
+    .wheel-head{padding-bottom:6px}
+    .witem b{font-size:11.5px;letter-spacing:.05em}
+    .witem small{font-size:6px;letter-spacing:.14em}
+    .lab .grade-pv{height:64px;margin-bottom:9px}
+    .lab .sldrow{margin:6px 0}
+    .deck{
+      grid-column:2;grid-row:3;min-height:0;
+      flex-direction:column;flex-wrap:nowrap;align-items:stretch;justify-content:flex-start;
+      padding:9px 12px 11px;gap:9px;
+    }
+    .strip{flex:1 1 auto;height:auto;min-height:46px}
+    .strip .thumb{width:70px;height:70px}
+    .strip-empty{font-size:8.5px;letter-spacing:.2em}
+    .pickbar{order:0;flex:0 0 auto}
+    .shutter{width:58px;height:58px;align-self:center}
+  }
+
+  /* ================= 抽屉 / 选胶片 ================= */
+  .scrim{
+    position:fixed;inset:0;z-index:24;background:rgba(0,0,0,.55);
+    opacity:0;pointer-events:none;transition:opacity .28s;
+  }
+  .scrim.on{opacity:1;pointer-events:auto}
+  .sheet{
+    position:fixed;left:0;right:0;bottom:0;z-index:25;
+    background:var(--panel);border-radius:20px 20px 0 0;
+    border-top:1px solid var(--line);
+    transform:translateY(101%);transition:transform .32s cubic-bezier(.32,.86,.28,1);
+    display:flex;flex-direction:column;max-height:76dvh;
+    padding-bottom:calc(8px + env(safe-area-inset-bottom));
+  }
+  .sheet.on{transform:none}
+  .sheet-head{
+    flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px 10px;
+  }
+  .sheet-head h2{margin:0;font-size:13px;letter-spacing:.16em;color:#cfcac2;font-weight:600}
+  .sheet-head .x{
+    background:none;border:1px solid var(--line);color:var(--dim);
+    width:30px;height:30px;border-radius:50%;font-size:15px;line-height:1;
+  }
+  .sheet-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px 6px}
+
+  .films{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  .film{
+    border:1px solid var(--line);border-radius:11px;overflow:hidden;
+    background:var(--card);padding:0;text-align:left;position:relative;
+  }
+  .film.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .film .pv{
+    height:52px;display:flex;align-items:flex-end;justify-content:center;padding:6px;
+    font-family:'Times New Roman',serif;font-size:9px;letter-spacing:.14em;
+    color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);
+  }
+  .film .nm{
+    display:block;padding:6px 8px 7px;font-size:11px;color:#cfcac2;letter-spacing:.03em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .film .tag{
+    position:absolute;top:5px;right:5px;font-size:8px;letter-spacing:.1em;
+    background:rgba(0,0,0,.55);color:var(--accent);padding:2px 5px;border-radius:3px;
+  }
+
+  .makebtn{
+    margin:10px 0 4px;width:100%;padding:13px;border-radius:12px;
+    border:1px dashed var(--line);background:transparent;color:#b9b4ac;
+    font-size:13px;letter-spacing:.06em;
+  }
+
+  /* ================= 皮肤工坊 ================= */
+  .lab{position:fixed;inset:0;z-index:30;background:#0d0d11;
+    transform:translateY(101%);transition:transform .3s cubic-bezier(.32,.86,.28,1);
+    display:flex;flex-direction:column;
+    padding-top:env(safe-area-inset-top);}
+  .lab.on{transform:none}
+  .lab-head{
+    flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px 10px;border-bottom:1px solid var(--line);
+  }
+  .lab-head h2{margin:0;font-size:14px;letter-spacing:.1em;color:#e8e5de;font-weight:600}
+  .lab-head .x{background:none;border:1px solid var(--line);color:var(--dim);
+    width:30px;height:30px;border-radius:50%;font-size:15px}
+  .lab-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:14px 16px calc(18px + env(safe-area-inset-bottom))}
+
+  .pvcam{
+    border-radius:10px;padding:12px 14px;margin-bottom:16px;
+    display:flex;align-items:center;justify-content:space-between;
+    background:linear-gradient(168deg,var(--pv2),var(--pv1) 40%,#0a0a0c);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 8px 20px rgba(0,0,0,.5);
+  }
+  .pvcam b{font-family:var(--pvfont);font-size:14px;letter-spacing:.16em;color:var(--pvink);
+    text-shadow:0 1px 0 rgba(255,255,255,.2)}
+  .pvcam small{display:block;font-size:7.5px;letter-spacing:.2em;color:var(--pvink);opacity:.55}
+  .pvdot{width:34px;height:34px;border-radius:50%;
+    background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.5),var(--pvacc) 65%,#000);
+    box-shadow:0 3px 8px rgba(0,0,0,.5)}
+
+  .fld{margin-bottom:15px}
+  .fld > label{display:block;font-size:11px;letter-spacing:.14em;color:#8b8b96;margin-bottom:7px}
+  .row{display:flex;gap:9px}
+  .row > *{flex:1}
+  .col{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .col span{font-size:9px;color:#7d7d88;letter-spacing:.08em}
+  input[type=color]{
+    -webkit-appearance:none;appearance:none;border:1px solid var(--line);
+    border-radius:9px;width:100%;height:42px;padding:0;background:none;
+  }
+  input[type=color]::-webkit-color-swatch-wrapper{padding:3px}
+  input[type=color]::-webkit-color-swatch{border:0;border-radius:6px}
+  input[type=text]{
+    width:100%;background:#17171c;border:1px solid var(--line);border-radius:9px;
+    color:#e8e5de;padding:11px 12px;font-size:14px;font-family:inherit;
+  }
+  .seg{display:flex;gap:5px;background:#17171c;padding:4px;border-radius:10px;border:1px solid var(--line)}
+  .seg button{
+    flex:1;padding:9px 0;border-radius:7px;border:0;background:transparent;
+    color:#8b8b96;font-size:11.5px;font-family:inherit;
+  }
+  .seg button.on{background:var(--accent);color:#1a1408;font-weight:600}
+
+  /* 调色预览 + 滑杆 */
+  .grade-pv{
+    position:relative;height:88px;border-radius:10px;overflow:hidden;margin-bottom:12px;
+    border:1px solid var(--line);background:#000;
+  }
+  .gp-img{
+    position:absolute;inset:0;
+    background:
+      radial-gradient(circle at 71% 23%, #fff6cf 0 6%, rgba(255,240,180,.12) 7% 9%, transparent 10%),
+      linear-gradient(#456f95 0%, #8fb6d8 32%, #d9cba4 48%, #c0925a 60%, #7d8c4d 76%, #39451f 100%);
+    transition:filter .12s linear;
+  }
+  .gp-over{position:absolute;inset:0;pointer-events:none}
+  .gp-grain{
+    position:absolute;inset:-12px;opacity:0;pointer-events:none;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='n'/%3E%3C/svg%3E");
+    background-size:140px 140px;
+  }
+  .gp-tag{
+    position:absolute;left:8px;top:6px;font:600 7px/1 ui-monospace,monospace;
+    letter-spacing:.2em;color:rgba(255,255,255,.62);text-shadow:0 1px 2px rgba(0,0,0,.9);
+  }
+  .sldrow{display:flex;align-items:center;gap:10px;margin:8px 0}
+  .sldrow .name{flex:0 0 46px;font-size:10.5px;letter-spacing:.06em;color:#8b8b96}
+  .sldrow .val{flex:0 0 34px;text-align:right;font:10px/1 ui-monospace,monospace;color:#cfcac2}
+  .sldrow input[type=range]{
+    flex:1 1 auto;min-width:0;-webkit-appearance:none;appearance:none;
+    height:4px;border-radius:2px;background:#2a2a33;outline:none;margin:0;
+  }
+  .sldrow input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--accent);border:2px solid #0d0d11;
+    box-shadow:0 2px 6px rgba(0,0,0,.65);
+  }
+  .sldrow input[type=range]::-moz-range-thumb{
+    width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid #0d0d11;
+  }
+
+  .lab-actions{
+    flex:0 0 auto;display:flex;gap:8px;padding:10px 16px calc(12px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line);background:#0d0d11;
+  }
+  .lab-actions button{flex:1;padding:12px 6px;border-radius:11px;border:1px solid var(--line);
+    background:#1c1c22;color:#e0dcd4;font-size:13px;font-family:inherit;white-space:nowrap}
+  .lab-actions .primary{flex:1.5;background:var(--accent);border-color:var(--accent);
+    color:#1a1408;font-weight:600}
+  .lab-actions .mini{flex:.8;font-size:11.5px;color:#8b8b96}
+
+  .ioshare{position:fixed;inset:0;z-index:40;background:rgba(6,6,10,.96);
+    display:none;flex-direction:column;padding:20px;
+    padding-top:calc(20px + env(safe-area-inset-top));padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+  .ioshare.on{display:flex}
+  .ioshare h2{margin:0 0 10px;font-size:13px;color:#cfcac2;letter-spacing:.1em}
+  .ioshare textarea{flex:1;width:100%;background:#17171c;color:#cfcac2;border:1px solid var(--line);
+    border-radius:10px;padding:10px;font:11px/1.5 ui-monospace,monospace;resize:none}
+  .ioshare .row{margin-top:10px;flex:0 0 auto}
+  .ioshare .row button{padding:11px;border-radius:10px;border:1px solid var(--line);
+    background:#1c1c22;color:#e0dcd4;font-size:13px;font-family:inherit}
+  .ioshare .row .primary{background:var(--accent);border-color:var(--accent);color:#1a1408;font-weight:600}
+
+  .busy{
+    position:fixed;inset:0;z-index:45;display:none;flex-direction:column;
+    align-items:center;justify-content:center;gap:14px;
+    background:rgba(5,5,9,.82);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  }
+  .busy.on{display:flex}
+  .busy div{font-size:12px;letter-spacing:.1em;color:#cfcac2}
+  .busy .bar{width:170px;height:2px;background:#2a2a34;border-radius:9px;overflow:hidden}
+  .busy .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .1s linear}
+
+  /* ================ 入场动画：完整相机 3D 盒 ================ */
+  .intro{
+    position:fixed;inset:0;z-index:9999;pointer-events:none;overflow:hidden;
+    background:radial-gradient(ellipse at 50% 42%,#17171f 0%,#020206 72%);
+    display:flex;align-items:center;justify-content:center;
+    perspective:2000px;perspective-origin:50% 45%;
+  }
+  .intro-cam{
+    --w:320px; --h:220px; --d:78px; --fit:2.6;
+    position:relative;width:var(--w);height:var(--h);
+    transform-style:preserve-3d;
+    animation-name: camFlip;
+    animation-duration: 3s;
+    animation-timing-function: cubic-bezier(.22,.72,.18,1);
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1;
+  }
+  @keyframes camFlip{
+    0%   {transform:rotateY(-50deg) rotateX(-22deg) translateZ(-520px) scale(.46);opacity:0}
+    12%  {transform:rotateY(-44deg) rotateX(-20deg) translateZ(-160px) scale(.66);opacity:1}
+    34%  {transform:rotateY(-30deg) rotateX(-12deg) translateZ(0) scale(1);opacity:1}
+    62%  {transform:rotateY(92deg) rotateX(-5deg) translateZ(0) scale(calc(1 + (var(--fit) - 1)*.45));opacity:1}
+    88%  {transform:rotateY(178deg) rotateX(0deg) translateZ(0) scale(var(--fit));opacity:1}
+    100% {transform:rotateY(180deg) rotateX(0deg) translateZ(0) scale(calc(var(--fit)*1.08));opacity:1}
+  }
+  /* 90° 侧身瞬间切换正/背面，避免 backface-visibility 在合成层上失效 */
+  @keyframes faceFront{0%,61.2%{visibility:visible}61.3%,100%{visibility:hidden}}
+  @keyframes faceBack{0%,61.2%{visibility:hidden}61.3%,100%{visibility:visible}}
+
+  /* 交接层：与真实机身同尺寸的克隆，最后淡入，做到结尾画面 = 操作界面 */
+  .intro-hand{
+    position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;
+    opacity:0;z-index:5;transform-origin:50% 50%;
+    transition:transform .35s ease;
+    animation:handIn 3s linear forwards;
+  }
+  .intro-hand .cam{
+    margin:0!important;width:100%!important;height:100%!important;
+    opacity:1!important;transform:none!important;transition:none!important;
+  }
+  /* 竖屏时交接层克隆「请把手机横过来」整屏，保证结尾画面与真实提示一致 */
+  .intro-hand .tip-rotate{
+    position:absolute!important;inset:0!important;display:flex!important;
+    opacity:1!important;transform:none!important;transition:none!important;
+    animation:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  }
+  .intro-hand video{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    background:#000;opacity:0;
+  }
+  /* 先让微缩界面完全淡出（露出纯深色背面屏），再由真实界面淡入，避免两套不同布局叠影 */
+  @keyframes handIn{0%,82%{opacity:0}90%,100%{opacity:1}}
+
+  .ic-face{
+    position:absolute;left:0;top:0;
+    width:var(--w);height:var(--h);
+    border-radius:14px;backface-visibility:visible;
+    overflow:hidden;
+    background:linear-gradient(172deg,#4a4450,#26242c 40%,#08080d 110%);
+    border:1px solid rgba(255,255,255,.06);
+  }
+  .ic-front{transform:translateZ(calc(var(--d)/2));background:linear-gradient(168deg,#4d4754 0%,#29272f 34%,#0a0a0f 100%);animation:faceFront 3s linear forwards}
+  .ic-back{transform:rotateY(180deg) translateZ(calc(var(--d)/2));background:linear-gradient(172deg,#2c2c35 0%,#17171d 38%,#07070b 100%);animation:faceBack 3s linear forwards}
+  .ic-top{transform:rotateX(90deg) translateZ(calc(var(--h)/2));height:var(--d);margin-top:calc(var(--h)/2 - calc(var(--d)/2));border-radius:8px;background:linear-gradient(180deg,#54505c,#22202a 46%,#141219);border-top:1px solid rgba(255,255,255,.16);border-bottom:1px solid rgba(0,0,0,.55)}
+  .ic-bottom{transform:rotateX(-90deg) translateZ(calc(var(--h)/2));height:var(--d);margin-top:calc(var(--h)/2 - calc(var(--d)/2));border-radius:8px;background:#171520}
+  .ic-left{transform:rotateY(-90deg) translateZ(calc(var(--w)/2));width:var(--d);margin-left:calc(var(--w)/2 - calc(var(--d)/2));border-radius:8px;background:#26232c}
+  .ic-right{transform:rotateY(90deg) translateZ(calc(var(--w)/2));width:var(--d);margin-left:calc(var(--w)/2 - calc(var(--d)/2));border-radius:8px;background:#26232c}
+
+  /* 机身侧面的皮革纹理 */
+  .ic-front::before,.ic-left::before,.ic-right::before{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.32;
+    background-image:
+      repeating-linear-gradient(38deg,rgba(255,255,255,.07) 0 1px,transparent 1px 3px),
+      repeating-linear-gradient(-38deg,rgba(0,0,0,.30) 0 1px,transparent 1px 3px);
+  }
+
+  /* ---------- 前面（镜头侧）---------- */
+  .ic-front{
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),inset 0 0 44px rgba(0,0,0,.55),0 26px 60px rgba(0,0,0,.55);
+  }
+  .ic-brand{
+    position:absolute;left:20px;top:13px;z-index:2;
+    font-family:'Times New Roman',serif;font-weight:600;font-size:10px;letter-spacing:.26em;
+    color:rgba(240,232,214,.78);
+    text-shadow:0 1px 0 rgba(255,255,255,.12),0 -1px 1px rgba(0,0,0,.85);
+  }
+  .ic-vfwin{
+    position:absolute;right:20px;top:11px;width:36px;height:23px;border-radius:4px;z-index:2;
+    background:radial-gradient(ellipse at 38% 30%,#5c6a78,#0a0e12 74%);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),0 2px 6px rgba(0,0,0,.75);
+  }
+  .ic-reddot{
+    position:absolute;right:64px;top:16px;width:10px;height:10px;border-radius:50%;z-index:2;
+    background:radial-gradient(circle at 36% 30%,#ff9486,#b8352a 72%);
+    box-shadow:0 0 9px rgba(255,88,68,.55);
+  }
+  .ic-lens{
+    position:relative;width:156px;height:156px;border-radius:50%;
+    background:
+      radial-gradient(circle at 50% 50%, transparent 46%, rgba(0,0,0,.4) 48%, transparent 50%),
+      conic-gradient(from 0deg,#5c5764 0deg,#aca7b3 90deg,#4b4651 180deg,#7a727e 270deg,#5c5764 360deg);
+    box-shadow:
+      0 10px 26px rgba(0,0,0,.7),
+      inset 0 0 0 2px #0a0a0f,
+      inset 0 0 0 7px #24212a,
+      inset 0 0 0 10px #121116,
+      inset 0 0 0 13px #1b181f;
+  }
+  .ic-lens::before{
+    content:'';position:absolute;inset:17px;border-radius:50%;
+    background:
+      repeating-conic-gradient(from 0deg,#0a0a12 0deg 1deg,transparent 1deg 3deg),
+      radial-gradient(circle,#3a3a44 60%,#14141c);
+    opacity:.6;
+  }
+  .ic-iris{
+    position:absolute;inset:31px;border-radius:50%;
+    background:#0a0a0f;overflow:hidden;
+    box-shadow:inset 0 0 12px rgba(0,0,0,.9);
+  }
+  .ic-iris .blade{
+    position:absolute;left:50%;top:0;width:50%;height:50%;
+    transform-origin:0% 100%;
+    background:linear-gradient(135deg,#9a9aa8 0%,#3a3a44 60%,#14141c 100%);
+    clip-path:polygon(50% 38%,100% 100%,0% 100%);
+    animation:icIris 1.2s cubic-bezier(.3,.9,.3,1) .35s forwards;
+  }
+  .ic-iris .blade:nth-child(1){transform:rotate(90deg)}
+  .ic-iris .blade:nth-child(2){transform:rotate(150deg)}
+  .ic-iris .blade:nth-child(3){transform:rotate(210deg)}
+  .ic-iris .blade:nth-child(4){transform:rotate(270deg)}
+  .ic-iris .blade:nth-child(5){transform:rotate(330deg)}
+  .ic-iris .blade:nth-child(6){transform:rotate(30deg)}
+  @keyframes icIris{
+    0%  {clip-path:polygon(50% 38%,100% 100%,0% 100%)}
+    60% {clip-path:polygon(50% 0%,100% 100%,0% 100%)}
+    100%{clip-path:polygon(50% 0%,100% 100%,0% 100%)}
+  }
+  .ic-lens-glass{
+    position:absolute;inset:40px;border-radius:50%;
+    background:
+      radial-gradient(circle at 30% 26%, #fff 0 4%, rgba(200,220,255,.8) 7%, rgba(80,120,200,.5) 15%, transparent 22%),
+      radial-gradient(circle at 70% 74%, #ffd48a 0 3%, rgba(255,180,80,.4) 12%, transparent 20%),
+      radial-gradient(circle at 50% 50%, #0d1a2e 0 40%, #050a14 80%);
+    box-shadow:inset 0 0 12px rgba(0,0,0,.9);
+    animation:icLens 1s ease .25s forwards;opacity:0;
+  }
+  @keyframes icLens{
+    0%{opacity:0;transform:scale(.5)}
+    50%{opacity:1;transform:scale(1.15)}
+    100%{opacity:1;transform:scale(1)}
+  }
+
+  /* 正面装饰 */
+  .ic-front::after{
+    content:'35mm · f/2.8';position:absolute;bottom:13px;left:20px;z-index:2;
+    font:600 7px/1 ui-monospace,monospace;letter-spacing:.26em;
+    color:rgba(224,214,188,.45);
+  }
+
+  /* ---------- 顶面 ---------- */
+  .ic-top{
+    position:relative;display:flex;align-items:center;justify-content:space-between;padding:0 14px;
+  }
+  .ic-top::before{
+    content:'';position:absolute;inset:8px;border-radius:4px;pointer-events:none;
+    background:
+      repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 1px,transparent 1px 3px);
+    opacity:.4;
+  }
+  .ic-top-mark{
+    font-family:'Times New Roman',serif;font-weight:600;font-size:9px;letter-spacing:.25em;
+    color:rgba(230,220,200,.7);text-shadow:0 1px 0 rgba(255,255,255,.1),0 -1px 1px rgba(0,0,0,.8);
+  }
+  .ic-top-dial{
+    width:32px;height:32px;border-radius:50%;position:relative;
+    background:conic-gradient(from 0deg,#3a3a44 0deg,#6a6a78 30deg,#3a3a44 60deg,#6a6a78 120deg,#3a3a44 180deg,#6a6a78 240deg,#3a3a44 360deg);
+    box-shadow:0 3px 6px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.08);
+  }
+  .ic-top-dial::after{
+    content:'';position:absolute;left:50%;top:4px;width:2px;height:6px;margin-left:-1px;
+    background:rgba(230,180,80,.9);border-radius:1px;
+  }
+
+  /* ---------- 后面（屏幕侧 = 操作界面微缩版）---------- */
+  .ic-back{
+    padding:14px 16px 16px;display:flex;flex-direction:column;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),inset 0 0 44px rgba(0,0,0,.6),0 26px 60px rgba(0,0,0,.55);
+  }
+  .ic-mock{
+    flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;
+    animation:icMockLife 3s linear forwards;
+  }
+  @keyframes icMockLife{
+    0%,74%{opacity:1}
+    82%,100%{opacity:0}
+  }
+  .ic-lid{
+    display:flex;align-items:center;justify-content:space-between;z-index:2;
+    font-family:'Times New Roman',serif;font-weight:600;font-size:10.5px;letter-spacing:.2em;
+    color:rgba(240,234,220,.85);
+    text-shadow:0 1px 0 rgba(255,255,255,.1),0 -1px 1px rgba(0,0,0,.8);
+  }
+  .ic-lid small{font-family:ui-monospace,monospace;font-size:8px;color:#f3b94c;letter-spacing:.1em}
+  .ic-vf{
+    flex:1;min-height:0;width:100%;border-radius:3px;
+    background:
+      radial-gradient(circle at 50% 48%,rgba(130,180,220,.4) 0%,transparent 35%),
+      linear-gradient(135deg,#3a4250,#1a1d25);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08),inset 0 0 20px rgba(0,0,0,.85);
+    position:relative;overflow:hidden;z-index:2;
+    /* 屏幕微光闪烁 */
+    animation:icScreenGlow 1.8s ease-in-out infinite;
+  }
+  @keyframes icScreenGlow{
+    0%,100%{opacity:.85}
+    50%{opacity:1}
+  }
+  .ic-vf::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(circle at 50% 50%, transparent 45%, rgba(0,0,0,.6) 75%);
+    box-shadow:inset 0 0 20px rgba(0,0,0,.9);
+  }
+  .ic-vf::after{
+    content:'';position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px;
+    border:1px solid rgba(255,255,255,.45);border-radius:1px;
+    animation:icFocus 2.4s ease-in-out infinite;
+  }
+  @keyframes icFocus{
+    0%,100%{opacity:.2;transform:scale(.8)}
+    50%{opacity:.85;transform:scale(1)}
+  }
+  .ic-wheel{
+    display:flex;flex-direction:column;gap:2px;z-index:2;
+  }
+  .ic-wlabel{font-size:6px;letter-spacing:.3em;color:rgba(220,210,180,.4)}
+  .ic-wholder{
+    height:26px;border-radius:4px;display:flex;align-items:center;justify-content:center;gap:8px;
+    background:linear-gradient(180deg,#040406,#232126 12%,#0b0b0e 84%,#000);
+    box-shadow:inset 0 2px 3px rgba(0,0,0,.9),inset 0 -2px 3px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.06);
+    font-family:'Times New Roman',serif;font-weight:600;font-size:9px;letter-spacing:.25em;
+    color:#efece6;text-shadow:0 1px 1px rgba(0,0,0,.9);
+  }
+  .ic-wholder::before,.ic-wholder::after{
+    content:'‹';font-size:10px;color:rgba(240,234,220,.45)
+  }
+  .ic-wholder::after{content:'›'}
+  .ic-deck{display:flex;align-items:center;gap:6px;z-index:2}
+  .ic-strip{
+    flex:1;height:26px;border-radius:2px;background:#08080b;position:relative;overflow:hidden;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+  }
+  .ic-strip::before,.ic-strip::after{
+    content:'';position:absolute;left:0;right:0;height:4px;
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,.15) 0 4px,transparent 4px 10px);
+  }
+  .ic-strip::before{top:0}.ic-strip::after{bottom:0}
+  .ic-strip b{position:absolute;left:6px;top:50%;margin-top:-5px;font:600 6px/1 ui-monospace,monospace;letter-spacing:.2em;color:#55555f}
+  .ic-shutter{
+    width:28px;height:28px;border-radius:50%;position:relative;
+    background:radial-gradient(circle at 36% 28%,#ff6d5f,#c9483b 56%,#631c17);
+    box-shadow:0 3px 8px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -3px 6px rgba(0,0,0,.5);
+    flex-shrink:0;
+  }
+  .ic-shutter::after{
+    content:'';position:absolute;inset:-3px;border-radius:50%;
+    border:1px solid rgba(255,255,255,.1);
+  }
+  .ic-mark{
+    position:absolute;bottom:5px;right:12px;font-family:'Times New Roman',serif;font-weight:600;
+    font-size:7px;letter-spacing:.4em;color:rgba(220,210,180,.3);z-index:1;
+  }
+
+  /* 翻转到背面时，微缩界面在镜头充满屏幕的过程中淡去，交给真实界面接手 */
+  /* 机身淡入（等 intro 结束后） */
+  body .cam,body .tip-rotate{opacity:0;transform:scale(1.02);transition:opacity .35s ease, transform .35s ease}
+  body.ready .cam,body.ready .tip-rotate{opacity:1;transform:none}
+
+  /* ================ 竖屏旋转提示 ================ */
+  .tip-rotate{
+    position:fixed;inset:0;z-index:9998;display:none;pointer-events:none;
+    background:radial-gradient(ellipse at center,#0a0a12 0%,#020206 80%);
+    color:#e8e2d6;flex-direction:column;align-items:center;justify-content:center;
+    gap:22px;padding:30px;font-family:inherit;backdrop-filter:blur(3px);
+  }
+  .tip-rotate .i{
+    width:110px;height:110px;border-radius:22px;position:relative;
+    transform:rotate(-90deg);
+    background:linear-gradient(145deg,#3a3540,#1a1822);
+    border:2px solid rgba(255,255,255,.14);
+    box-shadow:0 20px 50px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.2);
+    animation:tipSpin 2.4s ease-in-out infinite;
+  }
+  .tip-rotate .i::after{
+    content:'';position:absolute;inset:10px;border-radius:14px;
+    background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.12),transparent 70%);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .tip-rotate .arr{position:absolute;right:-30px;top:50%;margin-top:-14px;font-size:26px;color:var(--accent);
+    animation:arrPulse 1.6s ease-in-out infinite}
+  @keyframes tipSpin{
+    0%,100%{transform:rotate(-90deg)}
+    50%{transform:rotate(0deg)}
+  }
+  @keyframes arrPulse{
+    0%,100%{opacity:.4}
+    50%{opacity:1;transform:translateX(4px)}
+  }
+  .tip-rotate p{margin:0;font-size:14px;letter-spacing:.2em;opacity:.8;text-align:center}
+  .tip-rotate small{font-size:10px;letter-spacing:.1em;opacity:.4}
+
+  @media (orientation: portrait){
+    .tip-rotate{display:flex}
+  }
+
+  input[type=file]{display:none}
+</style>
+</head>
+<body>
+
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro-cam" id="introCam">
+    <!-- 前面（镜头侧） -->
+    <div class="ic-face ic-front">
+      <span class="ic-brand">PORTRA</span>
+      <span class="ic-reddot"></span>
+      <span class="ic-vfwin"></span>
+      <div class="ic-lens">
+        <div class="ic-iris">
+          <div class="blade"></div><div class="blade"></div><div class="blade"></div>
+          <div class="blade"></div><div class="blade"></div><div class="blade"></div>
+        </div>
+        <div class="ic-lens-glass"></div>
+      </div>
+    </div>
+
+    <!-- 后面（屏幕侧 = 操作界面微缩版） -->
+    <div class="ic-face ic-back">
+      <div class="ic-mock">
+        <div class="ic-lid">
+          <b>PORTRA · 400 · 135</b>
+          <small>36</small>
+        </div>
+        <div class="ic-vf"></div>
+        <div class="ic-wheel">
+          <div class="ic-wlabel">FILM DIAL</div>
+          <div class="ic-wholder">PORTRA</div>
+        </div>
+        <div class="ic-deck">
+          <div class="ic-strip"><b>还没拍过</b></div>
+          <div class="ic-shutter"></div>
+        </div>
+      </div>
+      <div class="ic-mark">PORTRA</div>
+    </div>
+
+    <!-- 顶面（模式转盘等） -->
+    <div class="ic-face ic-top">
+      <div class="ic-top-mark">PORTRA</div>
+      <div class="ic-top-dial"></div>
+    </div>
+
+    <div class="ic-face ic-bottom"></div>
+    <div class="ic-face ic-left"></div>
+    <div class="ic-face ic-right"></div>
+  </div>
+  <!-- 结尾与真实界面无缝交接：克隆当前界面，最后淡入盖住相机背面 -->
+  <div class="intro-hand" id="introHand" aria-hidden="true"></div>
+</div>
+
+<div class="tip-rotate" aria-hidden="true">
+  <div class="i"><span class="arr">→</span></div>
+  <p>请把手机横过来</p>
+  <small>LANDSCAPE MODE · 胶片相机</small>
+</div>
+
+<div class="cam grip-leather" id="cam">
+  <div class="lid">
+    <div class="plate">
+      <b id="brandName">PORTRA</b>
+      <small id="brandModel">400 · 135</small>
+    </div>
+    <div class="topright">
+      <div class="counter" id="counter">36</div>
+      <button class="lensbtn" id="flipBtn" title="切换前后摄像头">⇄</button>
+    </div>
+  </div>
+
+  <div class="vf-zone">
+    <div class="windows">
+      <div class="w-rf"></div>
+      <div class="w-view"></div>
+      <div class="gap"></div>
+      <div class="w-led"></div>
+    </div>
+
+    <div class="vf-shell">
+      <div class="vf" id="vf">
+        <video id="video" playsinline muted autoplay></video>
+        <div class="vf-grade" id="vfGrade"></div>
+        <div class="vf-grain" id="vfGrain"></div>
+        <div class="vf-mask">
+          <div class="corner tl"></div><div class="corner tr"></div>
+          <div class="corner bl"></div><div class="corner br"></div>
+          <div class="cross"></div>
+          <div class="focus" id="focus"></div>
+        </div>
+        <div class="idle" id="idle">
+          <p>这是一台胶片相机</p>
+          <button class="go" id="startBtn">开启取景器</button>
+          <a href="#" id="albumLink">没有摄像头？从相册选一张</a>
+        </div>
+        <div class="flash" id="flash"></div>
+        <div class="warn" id="warn"></div>
+      </div>
+    </div>
+
+    <div class="vf-foot">
+      <span id="vfFilm">PORTRA 400</span>
+      <span class="r" id="vfExif">f/2.8 · 1/125 · ISO 400</span>
+    </div>
+
+    <div class="belly">
+      <div class="belly-brand" id="bellyBrand">PORTRA</div>
+      <div class="belly-sub" id="bellySub">35mm · ISO 400</div>
+    </div>
+  </div>
+
+  <div class="wheel-zone">
+    <div class="wheel-head">
+      <span>FILM DIAL</span>
+      <button class="labbtn" id="allBtn">全部胶卷 / 做皮肤</button>
+    </div>
+    <div class="wheel-shell">
+      <button class="wnav" id="wPrev">‹</button>
+      <div class="wheel" id="wheel"></div>
+      <button class="wnav" id="wNext">›</button>
+    </div>
+  </div>
+
+  <div class="deck">
+    <div class="strip" id="strip">
+      <span class="strip-empty">还没拍过</span>
+    </div>
+    <button class="shutter" id="shutter" aria-label="快门"><i></i></button>
+    <div class="pickbar" id="pickbar">
+      <span id="pickInfo">0 张</span>
+      <div class="pk-actions">
+        <button id="pickDel">删除</button>
+        <button class="primary" id="pickSave">保存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="sheet" id="sheet">
+  <div class="sheet-head">
+    <h2>选择胶卷</h2>
+    <button class="x" id="sheetClose">×</button>
+  </div>
+  <div class="sheet-body">
+    <div class="films" id="films"></div>
+    <button class="makebtn" id="makeBtn">+ 自定义胶卷（调色 / 机身）</button>
+  </div>
+</div>
+
+<div class="lab" id="lab">
+  <div class="lab-head">
+    <h2>自定义胶卷</h2>
+    <button class="x" id="labClose">×</button>
+  </div>
+  <div class="lab-body">
+    <div class="pvcam" id="pv">
+      <div>
+        <b id="pvBrand">MY CAM</b>
+        <small id="pvModel">CUSTOM · 135</small>
+      </div>
+      <div class="pvdot"></div>
+    </div>
+
+    <div class="fld">
+      <label>自定义色调（实时预览，可单独微调）</label>
+      <div class="grade-pv" id="gradePv">
+        <div class="gp-img" id="gpImg"></div>
+        <div class="gp-over" id="gpOver"></div>
+        <div class="gp-grain" id="gpGrain"></div>
+        <div class="gp-tag">GRADE PREVIEW</div>
+      </div>
+      <div class="sldrow"><span class="name">曝光</span><input type="range" id="gEv" data-k="ev" min="-30" max="30" step="1"><span class="val" id="gEvV">0</span></div>
+      <div class="sldrow"><span class="name">对比度</span><input type="range" id="gContrast" data-k="contrast" min="0" max="40" step="1"><span class="val" id="gContrastV">0</span></div>
+      <div class="sldrow"><span class="name">饱和度</span><input type="range" id="gSat" data-k="sat" min="40" max="160" step="1"><span class="val" id="gSatV">0</span></div>
+      <div class="sldrow"><span class="name">色温</span><input type="range" id="gTemp" data-k="temp" min="-25" max="25" step="1"><span class="val" id="gTempV">0</span></div>
+      <div class="sldrow"><span class="name">颗粒</span><input type="range" id="gGrain" data-k="grain" min="0" max="60" step="1"><span class="val" id="gGrainV">0</span></div>
+      <div class="sldrow"><span class="name">暗角</span><input type="range" id="gVign" data-k="vign" min="0" max="40" step="1"><span class="val" id="gVignV">0</span></div>
+      <div class="sldrow"><span class="name">褪色</span><input type="range" id="gFade" data-k="fade" min="0" max="20" step="1"><span class="val" id="gFadeV">0</span></div>
+    </div>
+
+    <div class="fld">
+      <label>铭牌大字</label>
+      <input type="text" id="inBrand" maxlength="10" placeholder="MY CAM">
+    </div>
+    <div class="fld">
+      <label>型号小字</label>
+      <input type="text" id="inModel" maxlength="18" placeholder="CUSTOM · 135">
+    </div>
+
+    <div class="fld">
+      <label>颜色</label>
+      <div class="row">
+        <div class="col"><input type="color" id="cBody" value="#3a3540"><span>机身</span></div>
+        <div class="col"><input type="color" id="cBody2" value="#57515f"><span>高光</span></div>
+        <div class="col"><input type="color" id="cAcc" value="#e8b04b"><span>点缀</span></div>
+        <div class="col"><input type="color" id="cInk" value="#efe9df"><span>刻字</span></div>
+        <div class="col"><input type="color" id="cShut" value="#c9483b"><span>快门</span></div>
+      </div>
+    </div>
+
+    <div class="fld">
+      <label>机身材质</label>
+      <div class="seg" id="segGrip">
+        <button data-v="leather" class="on">皮革</button>
+        <button data-v="metal">金属</button>
+        <button data-v="plastic">塑料</button>
+        <button data-v="wood">木纹</button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <label>刻字字体</label>
+      <div class="seg" id="segFont">
+        <button data-v="classic" class="on">经典</button>
+        <button data-v="modern">现代</button>
+        <button data-v="typewriter">打字机</button>
+      </div>
+    </div>
+
+    <div class="fld">
+      <label>影像底子（用哪卷胶片的色彩）</label>
+      <div class="seg" id="segBase">
+        <button data-v="__base" class="on">原色</button>
+        <button data-v="portra">Portra</button>
+        <button data-v="gold">Gold</button>
+        <button data-v="cinestill">CineStill</button>
+        <button data-v="acros">黑白</button>
+      </div>
+    </div>
+
+  </div>
+  <div class="lab-actions">
+    <button class="mini" id="labExport">导出</button>
+    <button class="mini" id="labImport">导入</button>
+    <button class="primary" id="labSave">保存并换上</button>
+  </div>
+</div>
+
+<div class="ioshare" id="ioshare">
+  <h2 id="ioTitle">皮肤数据</h2>
+  <textarea id="ioText" spellcheck="false"></textarea>
+  <div class="row">
+    <button id="ioClose">关闭</button>
+    <button class="primary" id="ioDo">确定</button>
+  </div>
+</div>
+
+<div class="busy" id="busy">
+  <div id="busyText">冲洗中…</div>
+  <div class="bar"><i id="busyBar"></i></div>
+</div>
+
+<input type="file" id="file" accept="image/*">
+
+<script>
+"use strict";
+
+/* ============================================================
+   1. 胶片预设：每卷胶片 = 一套成像参数 + 一套机身皮肤
+   ============================================================ */
+const PRESETS = [
+  {id:'portra', label:'Portra 400', iso:400,
+   ev:0, contrast:10, sat:95, temp:6, grain:16, halo:16, vign:8, fade:6,
+   shadow:[-.01,.01,.03], high:[.04,.03,0],
+   skin:{body:'#3b3630', body2:'#5d564c', accent:'#e8b04b', ink:'#f3ece0', shutter:'#c9483b',
+         grip:'leather', font:'classic', brand:'PORTRA', model:'400 · 135'}},
+
+  {id:'gold', label:'Gold 200', iso:200,
+   ev:0, contrast:12, sat:106, temp:11, grain:15, halo:14, vign:10, fade:4,
+   shadow:[.01,0,.02], high:[.06,.04,-.02],
+   skin:{body:'#3a2f18', body2:'#6b5730', accent:'#f0c05a', ink:'#fdf3d8', shutter:'#d4562e',
+         grip:'leather', font:'classic', brand:'GOLD', model:'200 · 135'}},
+
+  {id:'ektar', label:'Ektar 100', iso:100,
+   ev:0, contrast:24, sat:132, temp:2, grain:6, halo:8, vign:10, fade:2,
+   skin:{body:'#4a4c50', body2:'#8a8d93', accent:'#d94f3d', ink:'#f2f4f6', shutter:'#b8352a',
+         grip:'metal', font:'modern', brand:'EKTAR', model:'100 · 135'}},
+
+  {id:'cinestill', label:'CineStill 800T', iso:800,
+   ev:0, contrast:14, sat:108, temp:-12, grain:22, halo:55, vign:18, fade:4,
+   shadow:[-.03,.01,.07], high:[.03,.01,0],
+   skin:{body:'#111a24', body2:'#22344a', accent:'#4fd1c5', ink:'#dff3f2', shutter:'#c1453a',
+         grip:'metal', font:'modern', brand:'CINESTILL', model:'800T · TUNGSTEN'}},
+
+  {id:'provia', label:'Provia', iso:100,
+   ev:0, contrast:12, sat:112, temp:2, grain:10, halo:12, vign:8, fade:2,
+   skin:{body:'#1e2126', body2:'#3b4148', accent:'#6fa8dc', ink:'#e6ecf2', shutter:'#b03a30',
+         grip:'metal', font:'modern', brand:'PROVIA', model:'100F · 135'}},
+
+  {id:'velvia', label:'Velvia', iso:50,
+   ev:0, contrast:30, sat:145, temp:0, grain:8, halo:8, vign:16, fade:0,
+   shadow:[0,0,.03], high:[.03,0,-.02],
+   skin:{body:'#0f2218', body2:'#20402c', accent:'#57d98b', ink:'#e2f5e6', shutter:'#c23f2f',
+         grip:'leather', font:'classic', brand:'VELVIA', model:'50 · 135'}},
+
+  {id:'astia', label:'Astia', iso:100,
+   ev:0, contrast:10, sat:105, temp:3, grain:8, halo:10, vign:8, fade:3,
+   skin:{body:'#3a2a2c', body2:'#6d5152', accent:'#e0a2a2', ink:'#fbeeec', shutter:'#c05a55',
+         grip:'leather', font:'classic', brand:'ASTIA', model:'100F · 135'}},
+
+  {id:'chrome', label:'Classic Chrome', iso:200,
+   ev:0, contrast:22, sat:82, temp:-2, grain:12, halo:10, vign:14, fade:5,
+   shadow:[-.02,.01,.04], high:[.02,.02,-.02],
+   skin:{body:'#24272c', body2:'#444a52', accent:'#9fb3c8', ink:'#e8edf2', shutter:'#a83d33',
+         grip:'metal', font:'modern', brand:'CHROME', model:'CLASSIC · 135'}},
+
+  {id:'neg', label:'Classic Neg', iso:400,
+   ev:0, contrast:26, sat:96, temp:4, grain:14, halo:14, vign:12, fade:8,
+   shadow:[.04,0,0], high:[-.01,0,.04],
+   skin:{body:'#1c1a18', body2:'#37332c', accent:'#b08d5a', ink:'#ece4d6', shutter:'#b5442f',
+         grip:'leather', font:'typewriter', brand:'NEG', model:'CLASSIC · 400'}},
+
+  {id:'acros', label:'Acros', iso:100, mono:true,
+   ev:0, contrast:28, sat:100, temp:0, grain:30, halo:8, vign:20, fade:3,
+   skin:{body:'#1b1b1d', body2:'#3d3d41', accent:'#d8d8d8', ink:'#f2f2f2', shutter:'#9c3a33',
+         grip:'metal', font:'classic', brand:'ACROS', model:'100 · B&W'}},
+
+  {id:'trix', label:'Tri-X 400', iso:400, mono:true,
+   ev:0, contrast:34, sat:100, temp:0, grain:45, halo:5, vign:28, fade:4,
+   skin:{body:'#141416', body2:'#303034', accent:'#e04a3a', ink:'#f4f2ee', shutter:'#e04a3a',
+         grip:'leather', font:'typewriter', brand:'TRI-X', model:'400 · B&W'}}
+];
+
+const FONTS = {
+  classic: "'Times New Roman', Georgia, serif",
+  modern: "-apple-system, 'Helvetica Neue', Arial, sans-serif",
+  typewriter: "'Courier New', ui-monospace, monospace"
+};
+
+/* ============================================================
+   2. 状态
+   ============================================================ */
+const S = {
+  current: 'portra',
+  custom: [],          // 自定义皮肤（也带成像参数）
+  stream: null,
+  facing: 'environment',
+  mirror: false,
+  frame: 36,
+  shots: [],
+  editing: null,       // 工坊正在编辑的皮肤
+  ioMode: 'export'
+};
+
+const LSKEY = 'ficam:v1';
+
+const el = id => document.getElementById(id);
+const video   = el('video');
+const vf      = el('vf');
+const cam     = el('cam');
+const flash   = el('flash');
+const warnBox = el('warn');
+
+/* ============================================================
+   3. 本地存储
+   ============================================================ */
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(LSKEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (Array.isArray(d.custom)) S.custom = d.custom.filter(x => x && x.skin);
+    if (typeof d.current === 'string') S.current = d.current;
+    if (typeof d.frame === 'number') S.frame = d.frame;
+  }catch(e){}
+}
+function saveStore(){
+  try{
+    localStorage.setItem(LSKEY, JSON.stringify({
+      current: S.current, custom: S.custom, frame: S.frame
+    }));
+  }catch(e){}
+}
+
+function allPresets(){ return PRESETS.concat(S.custom); }
+
+function currentPreset(){
+  const list = allPresets();
+  return list.find(p => p.id === S.current) || list[0];
+}
+
+/* ============================================================
+   4. 应用皮肤到机身
+   ============================================================ */
+function applyTo(host, sk){
+  host.style.setProperty('--body', sk.body);
+  host.style.setProperty('--body2', sk.body2);
+  host.style.setProperty('--accent', sk.accent);
+  host.style.setProperty('--ink', sk.ink);
+  host.style.setProperty('--shutter', sk.shutter);
+  host.style.setProperty('--plate-font', FONTS[sk.font] || FONTS.classic);
+}
+function applySkin(){
+  const p = currentPreset();
+  const sk = p.skin;
+  applyTo(cam, sk);
+  cam.className = 'cam grip-' + (sk.grip || 'leather');
+  el('brandName').textContent = sk.brand;
+  el('brandModel').textContent = sk.model;
+  el('vfFilm').textContent = (sk.brand + ' ' + p.iso).toUpperCase();
+  el('vfExif').textContent = 'f/2.8 · 1/125 · ISO ' + p.iso;
+  el('bellyBrand').textContent = sk.brand;
+  el('bellySub').textContent = '35mm · ISO ' + p.iso;
+  const mt = document.querySelector('meta[name=theme-color]');
+  if (mt) mt.setAttribute('content', sk.body);
+  applyPreview(p);
+  syncWheel();
+}
+
+/* 取景器实时胶片色：CSS 滤镜 + 色偏 + 暗角 + 颗粒 */
+function previewFilter(p){
+  const c = 1 + Math.max(-0.6, Math.min(1.0, (p.contrast || 0)/100)) * 0.5;
+  const b = 1 + (p.ev || 0)/100 * 0.08;
+  let f = 'contrast(' + c.toFixed(2) + ') brightness(' + b.toFixed(2) + ') ';
+  if (p.mono) f += 'saturate(0) ';
+  else f += 'saturate(' + ((p.sat || 100)/100).toFixed(2) + ') ';
+  const t = (p.temp || 0)/100;
+  if (!p.mono && Math.abs(t) > 0.02){
+    f += 'sepia(' + (Math.abs(t) * 0.5).toFixed(2) + ') hue-rotate(' + (t > 0 ? -6 : 8) + 'deg) ';
+  }
+  return f.trim();
+}
+
+function applyPreview(p){
+  video.style.filter = previewFilter(p);
+  const vig = Math.min(0.4, (p.vign || 0)/100 * 0.8);
+  const t = (p.temp || 0)/100;
+  let tint = 'transparent';
+  if (!p.mono && Math.abs(t) > 0.02){
+    const a = Math.min(0.16, Math.abs(t) * 0.85);
+    tint = t > 0 ? 'rgba(255,168,86,' + a.toFixed(3) + ')'
+                 : 'rgba(86,140,255,' + a.toFixed(3) + ')';
+  }
+  const g = el('vfGrade');
+  if (g) g.style.background =
+    'radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 42%, rgba(0,0,0,' + vig.toFixed(3) + ') 100%), ' + tint;
+  const gr = el('vfGrain');
+  if (gr) gr.style.opacity = Math.min(0.6, (p.grain || 0)/100 * 0.75).toFixed(3);
+}
+
+/* ---------- 横向波轮 ---------- */
+let wheelLock = false;
+let wheelTimer = null;
+
+function buildWheel(){
+  const w = el('wheel');
+  w.innerHTML = '';
+  allPresets().forEach(p => {
+    const it = document.createElement('div');
+    it.className = 'witem';
+    it.dataset.id = p.id;
+
+    const roll = document.createElement('div');
+    roll.className = 'roll';
+
+    const can = document.createElement('div');     // 胶卷罐
+    can.className = 'can';
+    can.style.setProperty('--can', p.skin.accent);
+
+    const strip = document.createElement('div');   // 走片
+    strip.className = 'wstrip';
+
+    const b = document.createElement('b');
+    b.textContent = p.skin.brand;
+    const s = document.createElement('small');
+    s.textContent = 'ISO ' + p.iso + (p.mine ? ' · 我的' : '');
+    strip.appendChild(b);
+    strip.appendChild(s);
+
+    roll.appendChild(can);
+    roll.appendChild(strip);
+    it.appendChild(roll);
+    w.appendChild(it);
+  });
+  syncWheel();
+}
+
+/* 滚动时让胶卷罐真的转、齿孔真的走片 */
+let reelRaf = 0;
+function updateReels(){
+  const w = el('wheel');
+  if (!w) return;
+  const cw = w.clientWidth || 1;
+  const sl = w.scrollLeft;
+  w.querySelectorAll('.witem').forEach((it, i) => {
+    const d = (sl - i * cw) / cw;   // 0 = 正中
+    const can = it.querySelector('.can');
+    const strip = it.querySelector('.wstrip');
+    if (can) can.style.setProperty('--rot', (-Math.sin(d * Math.PI) * 18).toFixed(1) + 'deg');
+    if (strip) strip.style.setProperty('--shift', (-d * 88).toFixed(1) + 'px');
+  });
+}
+function queueReels(){
+  if (reelRaf) return;
+  reelRaf = requestAnimationFrame(() => { reelRaf = 0; updateReels(); });
+}
+
+function syncWheel(){
+  const w = el('wheel');
+  if (!w.children.length) return;
+  const list = allPresets();
+  let i = list.findIndex(p => p.id === S.current);
+  if (i < 0) i = 0;
+  wheelLock = true;
+  w.style.scrollBehavior = 'auto';
+  const fix = () => { w.scrollLeft = i * (w.clientWidth || 1); };
+  fix();
+  requestAnimationFrame(fix);
+  requestAnimationFrame(updateReels);
+  setTimeout(() => { wheelLock = false; w.style.scrollBehavior = ''; updateReels(); }, 300);
+}
+
+function onWheelScroll(){
+  clearTimeout(wheelTimer);
+  wheelTimer = setTimeout(() => {
+    if (wheelLock) return;
+    const w = el('wheel');
+    const i = Math.round(w.scrollLeft / (w.clientWidth || 1));
+    const list = allPresets();
+    const p = list[i];
+    if (p && p.id !== S.current){
+      S.current = p.id;
+      saveStore();
+      applySkin();
+      if (warnBox) warnBox.style.display = 'none';
+    }
+  }, 130);
+}
+
+function stepWheel(dir){
+  const w = el('wheel');
+  const list = allPresets();
+  let i = Math.round(w.scrollLeft / (w.clientWidth || 1)) + dir;
+  i = Math.max(0, Math.min(list.length - 1, i));
+  w.scrollTo({ left: i * w.clientWidth, behavior: 'smooth' });
+}
+
+el('wheel').addEventListener('scroll', onWheelScroll, {passive:true});
+el('wheel').addEventListener('scroll', queueReels, {passive:true});
+el('wPrev').onclick = () => stepWheel(-1);
+el('wNext').onclick = () => stepWheel(1);
+el('allBtn').onclick = () => openSheet();
+
+/* ============================================================
+   5. 成像处理（LUT / 光晕 / 颗粒 / 暗角）
+   ============================================================ */
+function tone(x, c){
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const k = 1 + Math.max(-0.85, Math.min(1.2, c));
+  return x < 0.5 ? 0.5 * Math.pow(2*x, k) : 1 - 0.5 * Math.pow(2-2*x, k);
+}
+
+function clamp01(v){ return v < 0 ? 0 : (v > 1 ? 1 : v); }
+
+function buildLUT(p){
+  const ev = Math.pow(2, p.ev/100);
+  const c = p.contrast/100;
+  const fade = p.fade/100;
+  const temp = p.temp/1000;
+  const sh = p.shadow || [0,0,0];
+  const hi = p.high || [0,0,0];
+  const L = {
+    r:new Float32Array(256), g:new Float32Array(256), b:new Float32Array(256),
+    m:new Float32Array(256)
+  };
+  const chans = ['r','g','b'];
+  for (let ci=0; ci<3; ci++){
+    const ch = chans[ci];
+    let mul = 1;
+    if (ch === 'r') mul = 1 + temp * 1.7;
+    if (ch === 'b') mul = 1 - temp * 1.7;
+    const A = L[ch];
+    for (let i=0; i<256; i++){
+      let x = Math.min(1, (i/255) * ev);
+      let y = tone(x, c);
+      y = y * (1 + sh[ci]*(1-y) + hi[ci]*y) * mul;
+      y = y + fade * 0.06 * (1 - y);
+      A[i] = clamp01(y);
+    }
+  }
+  for (let i=0; i<256; i++){
+    let x = Math.min(1, (i/255) * ev);
+    let y = tone(x, c);
+    y = y + fade * 0.06 * (1 - y);
+    L.m[i] = clamp01(y);
+  }
+  return L;
+}
+
+/* 可分离盒式模糊（float 三通道） */
+function boxBlur(buf, w, h, r){
+  const tmp = new Float32Array(w*h*3);
+  for (let y=0; y<h; y++){
+    for (let x=0; x<w; x++){
+      let sr=0, sg=0, sb=0, n=0;
+      for (let k=-r; k<=r; k++){
+        const xx = x+k; if (xx<0 || xx>=w) continue;
+        const i = (y*w+xx)*3;
+        sr += buf[i]; sg += buf[i+1]; sb += buf[i+2]; n++;
+      }
+      const o = (y*w+x)*3;
+      tmp[o]=sr/n; tmp[o+1]=sg/n; tmp[o+2]=sb/n;
+    }
+  }
+  for (let y=0; y<h; y++){
+    for (let x=0; x<w; x++){
+      let sr=0, sg=0, sb=0, n=0;
+      for (let k=-r; k<=r; k++){
+        const yy = y+k; if (yy<0 || yy>=h) continue;
+        const i = (yy*w+x)*3;
+        sr += tmp[i]; sg += tmp[i+1]; sb += tmp[i+2]; n++;
+      }
+      const o = (y*w+x)*3;
+      buf[o]=sr/n; buf[o+1]=sg/n; buf[o+2]=sb/n;
+    }
+  }
+}
+
+/* 光晕：亮部扩散 + 暖色偏移 */
+function halation(d, w, h, strength){
+  const k = 4;
+  const bw = Math.max(1, Math.floor(w/k)), bh = Math.max(1, Math.floor(h/k));
+  const buf = new Float32Array(bw*bh*3);
+  for (let by=0; by<bh; by++){
+    for (let bx=0; bx<bw; bx++){
+      let sr=0, sg=0, sb=0, n=0;
+      for (let yy=0; yy<k; yy++){
+        const py = by*k+yy; if (py>=h) break;
+        for (let xx=0; xx<k; xx++){
+          const px = bx*k+xx; if (px>=w) break;
+          const i = (py*w+px)*4;
+          sr += d[i]; sg += d[i+1]; sb += d[i+2]; n++;
+        }
+      }
+      sr/=n; sg/=n; sb/=n;
+      const lum = (sr*0.3 + sg*0.59 + sb*0.11) / 255;
+      const t0 = Math.max(0, lum - 0.6) / 0.4;
+      const t = t0 * t0;
+      const o = (by*bw+bx)*3;
+      buf[o] = sr*t; buf[o+1] = sg*t; buf[o+2] = sb*t;
+    }
+  }
+  boxBlur(buf, bw, bh, 3);
+  boxBlur(buf, bw, bh, 3);
+
+  const s = (strength/100) * 0.55;
+  const wr = 1.0, wg = 0.78, wb = 0.62;
+  for (let y=0; y<h; y++){
+    const by = Math.min(bh-1, (y/k)|0);
+    for (let x=0; x<w; x++){
+      const bx = Math.min(bw-1, (x/k)|0);
+      const bi = (by*bw+bx)*3;
+      const i = (y*w+x)*4;
+      d[i]   = d[i]   + buf[bi]   * wr * s;
+      d[i+1] = d[i+1] + buf[bi+1] * wg * s;
+      d[i+2] = d[i+2] + buf[bi+2] * wb * s;
+    }
+  }
+}
+
+function processData(imgd, p){
+  const w = imgd.width, h = imgd.height, d = imgd.data;
+  const L = buildLUT(p);
+  const mono = !!p.mono;
+  const sat = p.sat/100;
+
+  for (let i=0; i<d.length; i+=4){
+    let r, g, b;
+    if (mono){
+      const y = L.m[(d[i]*0.3 + d[i+1]*0.59 + d[i+2]*0.11)|0];
+      r = g = b = y;
+    } else {
+      r = L.r[d[i]]; g = L.g[d[i+1]]; b = L.b[d[i+2]];
+      if (sat !== 1){
+        const y = 0.3*r + 0.59*g + 0.11*b;
+        r = y + (r-y)*sat;
+        g = y + (g-y)*sat;
+        b = y + (b-y)*sat;
+      }
+    }
+    d[i] = r*255; d[i+1] = g*255; d[i+2] = b*255;
+  }
+
+  if (p.halo > 0) halation(d, w, h, p.halo);
+
+  const gAmt = p.grain/100;
+  const vAmt = p.vign/100;
+  if (gAmt > 0 || vAmt > 0){
+    const cx = w/2, cy = h/2;
+    const maxR2 = cx*cx + cy*cy;
+    for (let y=0; y<h; y++){
+      const dy = y - cy;
+      const dy2 = dy*dy;
+      for (let x=0; x<w; x++){
+        const i = (y*w+x)*4;
+        if (gAmt > 0){
+          const lum = (d[i] + d[i+1] + d[i+2]) / 765;
+          const n = (Math.random() - 0.5) * gAmt * 46 * (0.35 + 0.65*lum);
+          d[i] += n; d[i+1] += n; d[i+2] += n;
+        }
+        if (vAmt > 0){
+          const dx = x - cx;
+          const r2 = (dx*dx + dy2) / maxR2;
+          const f = 1 - vAmt * 0.55 * r2 * r2;
+          d[i] *= f; d[i+1] *= f; d[i+2] *= f;
+        }
+      }
+    }
+  }
+  return imgd;
+}
+
+/* ============================================================
+   6. 摄像头
+   ============================================================ */
+function showWarn(text){
+  warnBox.textContent = text;
+  warnBox.style.display = 'block';
+  clearTimeout(showWarn.t);
+  showWarn.t = setTimeout(() => { warnBox.style.display = 'none'; }, 6000);
+}
+
+async function startCamera(){
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    showWarn('这个浏览器不支持直接开摄像头。可以用相册选图那张。');
+    return;
+  }
+  stopCamera();
+  try{
+    S.stream = await navigator.mediaDevices.getUserMedia({
+      audio:false,
+      video:{
+        facingMode:{ideal:S.facing},
+        width:{ideal:1920}, height:{ideal:1440}
+      }
+    });
+    video.srcObject = S.stream;
+    video.classList.add('on');
+    try{ await video.play(); }catch(e){}
+    S.mirror = (S.facing === 'user');
+    video.style.transform = S.mirror ? 'scaleX(-1)' : 'none';
+    el('idle').classList.add('hide');
+  }catch(err){
+    const n = err && err.name;
+    if (n === 'NotAllowedError' || n === 'SecurityError'){
+      showWarn('摄像头权限被拒绝了。到手机「设置 → Safari → 相机」里允许，再重新打开这一页。');
+    }else if (n === 'NotFoundError' || n === 'OverconstrainedError'){
+      showWarn('没找到可用的摄像头。可以先用「从相册选一张」。');
+    }else{
+      showWarn('开不了摄像头：' + (n || err) + '。可以在 Safari 里打开这一页试试。');
+    }
+    el('idle').classList.remove('hide');
+  }
+}
+
+function stopCamera(){
+  if (S.stream){
+    S.stream.getTracks().forEach(t => t.stop());
+    S.stream = null;
+  }
+}
+
+/* 快门声：两声短促的机械咔哒 */
+function shutterSound(){
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    if (!S.ac) S.ac = new AC();
+    const ac = S.ac;
+    if (ac.state === 'suspended') ac.resume();
+    const now = ac.currentTime;
+    [0, 0.055].forEach((t0, idx) => {
+      const len = Math.floor(ac.sampleRate * (idx ? 0.045 : 0.03));
+      const buf = ac.createBuffer(1, len, ac.sampleRate);
+      const ch = buf.getChannelData(0);
+      for (let i=0; i<len; i++){
+        const env = Math.exp(-i / (len * (idx ? 0.28 : 0.16)));
+        ch[i] = (Math.random()*2 - 1) * env;
+      }
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      const bp = ac.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = idx ? 620 : 1400;
+      bp.Q.value = 2.2;
+      const g = ac.createGain();
+      g.gain.value = idx ? 0.5 : 0.7;
+      src.connect(bp); bp.connect(g); g.connect(ac.destination);
+      src.start(now + t0);
+    });
+  }catch(e){}
+}
+
+/* ============================================================
+   7. 拍照
+   ============================================================ */
+function doFlash(){
+  flash.classList.remove('on');
+  void flash.offsetWidth;
+  flash.classList.add('on');
+}
+
+function busyOn(text){
+  el('busyText').textContent = text || '冲洗中…';
+  el('busyBar').style.width = '0%';
+  el('busy').classList.add('on');
+}
+function busyOff(){ el('busy').classList.remove('on'); }
+function busyProgress(p){ el('busyBar').style.width = Math.min(100, p*100) + '%'; }
+
+const MAX_SIDE = 1600;
+
+function grabFrame(){
+  const vw = video.videoWidth, vh = video.videoHeight;
+  const cw = vf.clientWidth, ch = vf.clientHeight;
+  if (!vw || !vh) return null;
+
+  const scale = Math.max(cw/vw, ch/vh);
+  const sw = cw/scale, sh = ch/scale;
+  const sx = (vw - sw)/2, sy = (vh - sh)/2;
+
+  let ow = sw, oh = sh;
+  const m = Math.max(ow, oh);
+  if (m > MAX_SIDE){
+    const r = MAX_SIDE/m;
+    ow = Math.round(ow*r);
+    oh = Math.round(oh*r);
+  }
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, ow); c.height = Math.max(1, oh);
+  const g = c.getContext('2d');
+  if (S.mirror){
+    g.translate(c.width, 0);
+    g.scale(-1, 1);
+  }
+  g.drawImage(video, sx, sy, sw, sh, 0, 0, c.width, c.height);
+  return c;
+}
+
+function shoot(){
+  if (!S.stream || !video.videoWidth){ startCamera(); return; }
+  if (S.frame <= 0){
+    S.frame = 36;
+    updateCounter();
+    saveStore();
+    showWarn('换上新胶卷 · 36 张');
+  }
+  doFlash();
+  shutterSound();
+  if (navigator.vibrate) navigator.vibrate(18);
+
+  const c = grabFrame();
+  if (!c) return;
+
+  busyOn('冲洗中…');
+  setTimeout(() => {
+    try{
+      const g = c.getContext('2d');
+      const imgd = g.getImageData(0, 0, c.width, c.height);
+      processData(imgd, currentPreset());
+      g.putImageData(imgd, 0, 0);
+      busyProgress(0.85);
+      c.toBlob(blob => {
+        busyProgress(1);
+        setTimeout(() => {
+          busyOff();
+          if (!blob){ showWarn('照片生成失败，再拍一次试试。'); return; }
+          S.frame--;
+          updateCounter();
+          saveStore();
+          addThumb(blob);
+          if (S.frame === 0) showWarn('这一卷拍完了 —— 点胶片栏里的照片，挑要留下的');
+        }, 60);
+      }, 'image/jpeg', 0.92);
+    }catch(e){
+      busyOff();
+      showWarn('处理出错了：' + e.message);
+    }
+  }, 80);
+}
+
+/* 相册模式（没有摄像头时的兜底） */
+function handleFile(file){
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    busyOn('冲洗中…');
+    setTimeout(() => {
+      try{
+        let w = img.naturalWidth, h = img.naturalHeight;
+        const m = Math.max(w, h);
+        if (m > MAX_SIDE){
+          const r = MAX_SIDE/m;
+          w = Math.round(w*r); h = Math.round(h*r);
+        }
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const g = c.getContext('2d');
+        g.drawImage(img, 0, 0, w, h);
+        const imgd = g.getImageData(0, 0, w, h);
+        processData(imgd, currentPreset());
+        g.putImageData(imgd, 0, 0);
+        busyProgress(0.85);
+        c.toBlob(blob => {
+          busyProgress(1);
+          setTimeout(() => {
+            busyOff();
+            if (!blob){ showWarn('这张图处理失败了，换一张试试。'); return; }
+            addThumb(blob);
+          }, 60);
+        }, 'image/jpeg', 0.92);
+      }catch(e){
+        busyOff();
+        showWarn('处理出错了：' + e.message);
+      }
+    }, 80);
+  };
+  img.onerror = () => showWarn('这张图打不开，换一张试试。');
+  img.src = URL.createObjectURL(file);
+}
+
+/* ============================================================
+   8. 胶片栏选片 / 保存
+   ============================================================ */
+function fileStamp(){
+  const p = currentPreset();
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return p.id + '_' + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate())
+         + '_' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds());
+}
+
+function addThumb(blob){
+  const strip = el('strip');
+  const empty = strip.querySelector('.strip-empty');
+  if (empty) empty.remove();
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'thumb';
+  const img = document.createElement('img');
+  img.alt = '刚拍的';
+  const ck = document.createElement('i');
+  ck.textContent = '✓';
+  btn.appendChild(img);
+  btn.appendChild(ck);
+
+  const item = { id: 'sh' + Date.now().toString(36) + S.shots.length,
+                 blob, url: URL.createObjectURL(blob), sel: false, saved: false, node: btn };
+  img.src = item.url;
+  btn.onclick = () => {
+    item.sel = !item.sel;
+    btn.classList.toggle('sel', item.sel);
+    refreshPick();
+  };
+
+  S.shots.push(item);
+  strip.appendChild(btn);
+  strip.scrollLeft = strip.scrollWidth;
+
+  while (S.shots.length > 30){
+    const old = S.shots.shift();
+    if (old.node.parentNode) old.node.remove();
+    URL.revokeObjectURL(old.url);
+  }
+  refreshPick();
+}
+
+function rebuildStrip(){
+  const strip = el('strip');
+  strip.innerHTML = '';
+  if (!S.shots.length){
+    const s = document.createElement('span');
+    s.className = 'strip-empty';
+    s.textContent = '还没拍过';
+    strip.appendChild(s);
+  }else{
+    S.shots.forEach(it => strip.appendChild(it.node));
+  }
+  refreshPick();
+}
+
+function refreshPick(){
+  const n = S.shots.filter(s => s.sel).length;
+  const bar = el('pickbar');
+  bar.classList.toggle('on', S.shots.length > 0);
+  el('pickInfo').textContent = n
+    ? ('已选 ' + n + ' 张')
+    : (S.shots.length + ' 张 · 点照片挑选');
+  el('pickSave').disabled = !n;
+  el('pickDel').disabled = !n;
+}
+
+function downloadBlob(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(a.href); }, 1600);
+}
+
+async function saveSelected(){
+  const picks = S.shots.filter(s => s.sel);
+  if (!picks.length){ showWarn('先在胶片栏里点几张要留下的照片'); return; }
+  const stamp = fileStamp();
+  const files = picks.map((s, i) => new File([s.blob], stamp + '_' + (i+1) + '.jpg', {type:'image/jpeg'}));
+
+  const markSaved = () => picks.forEach(s => {
+    s.sel = false; s.saved = true;
+    s.node.classList.remove('sel'); s.node.classList.add('saved');
+  });
+
+  if (navigator.canShare && navigator.canShare({files})){
+    try{
+      await navigator.share({files});
+      markSaved();
+      refreshPick();
+      return;
+    }catch(e){
+      if (e && e.name === 'AbortError') return;
+    }
+  }
+  picks.forEach((s, i) => setTimeout(() => downloadBlob(s.blob, stamp + '_' + (i+1) + '.jpg'), i*220));
+  markSaved();
+  refreshPick();
+  showWarn('正在保存 ' + picks.length + ' 张…');
+}
+
+function deleteSelected(){
+  const picks = S.shots.filter(s => s.sel);
+  if (!picks.length){ showWarn('先点几张不要的'); return; }
+  S.shots = S.shots.filter(s => {
+    if (!s.sel) return true;
+    if (s.node.parentNode) s.node.remove();
+    URL.revokeObjectURL(s.url);
+    return false;
+  });
+  if (!S.shots.length) rebuildStrip();
+  else refreshPick();
+  showWarn('删掉了 ' + picks.length + ' 张');
+}
+
+function updateCounter(){
+  const c = el('counter');
+  c.textContent = S.frame > 0 ? String(S.frame) : '00';
+  c.classList.toggle('low', S.frame <= 5);
+}
+
+/* ============================================================
+   9. 抽屉：选胶卷
+   ============================================================ */
+function buildFilms(){
+  const box = el('films');
+  box.innerHTML = '';
+  allPresets().forEach(p => {
+    const card = document.createElement('button');
+    card.className = 'film' + (p.id === S.current ? ' on' : '');
+    const sk = p.skin;
+    const pv = document.createElement('div');
+    pv.className = 'pv';
+    pv.style.background = 'linear-gradient(158deg,' + sk.body2 + ',' + sk.body + ' 62%,#000)';
+    pv.textContent = sk.brand;
+    const nm = document.createElement('span');
+    nm.className = 'nm';
+    nm.textContent = p.label;
+    card.appendChild(pv);
+    card.appendChild(nm);
+    if (p.mine){
+      const tg = document.createElement('span');
+      tg.className = 'tag';
+      tg.textContent = '我的';
+      card.appendChild(tg);
+    }
+    card.onclick = () => {
+      S.current = p.id;
+      saveStore();
+      applySkin();
+      buildFilms();
+      closeSheet();
+      if (warnBox) warnBox.style.display = 'none';
+    };
+    box.appendChild(card);
+  });
+}
+
+function openSheet(){
+  buildFilms();
+  el('scrim').classList.add('on');
+  el('sheet').classList.add('on');
+}
+function closeSheet(){
+  el('scrim').classList.remove('on');
+  el('sheet').classList.remove('on');
+}
+
+/* ============================================================
+   10. 皮肤工坊
+   ============================================================ */
+const LAB = {};
+
+/* ---------- 自定义色调 ---------- */
+const GRADE_ROWS = [
+  ['gEv','ev'], ['gContrast','contrast'], ['gSat','sat'], ['gTemp','temp'],
+  ['gGrain','grain'], ['gVign','vign'], ['gFade','fade']
+];
+
+function gradeFromPreset(p){
+  return {
+    ev: p.ev || 0,
+    contrast: (p.contrast == null ? 10 : p.contrast),
+    sat: (p.sat == null ? 100 : p.sat),
+    temp: p.temp || 0,
+    grain: p.grain || 0,
+    vign: p.vign || 0,
+    fade: p.fade || 0
+  };
+}
+
+function syncGradeUI(){
+  GRADE_ROWS.forEach(([id, k]) => {
+    const inp = el(id);
+    if (!inp) return;
+    inp.value = LAB.grade[k];
+    const out = el(id + 'V');
+    if (out) out.textContent = LAB.grade[k];
+  });
+  applyGradePreview();
+}
+
+/* 工坊里的实时调色预览：滤镜 + 色偏 + 暗角 + 颗粒 */
+function applyGradePreview(){
+  if (!el('gpImg')) return;
+  const g = LAB.grade;
+  const p = Object.assign({}, g, {mono: !!LAB.mono});
+  el('gpImg').style.filter = previewFilter(p);
+  const vig = Math.min(0.55, (g.vign || 0) / 100 * 1.05);
+  const t = (g.temp || 0) / 100;
+  let tint = 'transparent';
+  if (!LAB.mono && Math.abs(t) > 0.02){
+    const a = Math.min(0.2, Math.abs(t) * 0.85);
+    tint = t > 0 ? 'rgba(255,168,86,' + a.toFixed(3) + ')'
+                 : 'rgba(86,140,255,' + a.toFixed(3) + ')';
+  }
+  el('gpOver').style.background =
+    'radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 38%, rgba(0,0,0,' + vig.toFixed(3) + ') 100%), ' + tint;
+  el('gpGrain').style.opacity = Math.min(0.7, (g.grain || 0) / 100 * 0.9).toFixed(3);
+}
+
+function openLab(presetFrom){
+  const p = presetFrom || currentPreset();
+  const sk = p.skin;
+  LAB.mine = p.mine ? p : null;
+  LAB.baseOf = p.baseOf || p.id;
+  LAB.base = LAB.baseOf;
+  LAB.skin = Object.assign({}, sk);
+  LAB.mono = !!p.mono;
+  LAB.grade = gradeFromPreset(p);
+
+  el('inBrand').value = sk.brand;
+  el('inModel').value = sk.model;
+  el('cBody').value = sk.body;
+  el('cBody2').value = sk.body2;
+  el('cAcc').value = sk.accent;
+  el('cInk').value = sk.ink;
+  el('cShut').value = sk.shutter;
+  setSeg('segGrip', sk.grip || 'leather');
+  setSeg('segFont', sk.font || 'classic');
+  setSeg('segBase', '__base');
+
+  refreshLabPreview();
+  syncGradeUI();
+  el('lab').classList.add('on');
+}
+
+function setSeg(id, v){
+  el(id).querySelectorAll('button').forEach(b => {
+    b.classList.toggle('on', b.dataset.v === v);
+  });
+}
+
+function readLab(){
+  const sk = LAB.skin;
+  sk.brand = el('inBrand').value.trim() || 'MY CAM';
+  sk.model = el('inModel').value.trim() || 'CUSTOM · 135';
+  sk.body = el('cBody').value;
+  sk.body2 = el('cBody2').value;
+  sk.accent = el('cAcc').value;
+  sk.ink = el('cInk').value;
+  sk.shutter = el('cShut').value;
+  el('segGrip').querySelectorAll('button').forEach(b => { if (b.classList.contains('on')) sk.grip = b.dataset.v; });
+  el('segFont').querySelectorAll('button').forEach(b => { if (b.classList.contains('on')) sk.font = b.dataset.v; });
+  let rawBase = '__base';
+  el('segBase').querySelectorAll('button').forEach(b => { if (b.classList.contains('on')) rawBase = b.dataset.v; });
+  LAB.base = (rawBase === '__base') ? LAB.baseOf : rawBase;
+  return sk;
+}
+
+function refreshLabPreview(){
+  const sk = LAB.skin;
+  const pv = el('pv');
+  pv.style.setProperty('--pv1', sk.body);
+  pv.style.setProperty('--pv2', sk.body2);
+  pv.style.setProperty('--pvacc', sk.accent);
+  pv.style.setProperty('--pvink', sk.ink);
+  pv.style.setProperty('--pvfont', FONTS[sk.font] || FONTS.classic);
+  el('pvBrand').textContent = el('inBrand').value.trim() || 'MY CAM';
+  el('pvModel').textContent = el('inModel').value.trim() || 'CUSTOM · 135';
+}
+
+['inBrand','inModel'].forEach(id => {
+  el(id).addEventListener('input', refreshLabPreview);
+});
+['cBody','cBody2','cAcc','cInk','cShut'].forEach(id => {
+  el(id).addEventListener('input', refreshLabPreview);
+});
+['segGrip','segFont'].forEach(sid => {
+  el(sid).querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => {
+      el(sid).querySelectorAll('button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on');
+      readLab();
+      refreshLabPreview();
+    });
+  });
+});
+el('segBase').querySelectorAll('button').forEach(b => {
+  b.addEventListener('click', () => {
+    el('segBase').querySelectorAll('button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    LAB.base = b.dataset.v;
+    const key = (b.dataset.v === '__base') ? LAB.baseOf : b.dataset.v;
+    const bp = PRESETS.find(p => p.id === key);
+    if (bp){
+      LAB.mono = !!bp.mono;
+      LAB.grade = gradeFromPreset(bp);
+      syncGradeUI();
+    }
+  });
+});
+
+/* 调色滑杆：拖动即时改预览 */
+GRADE_ROWS.forEach(([id]) => {
+  const inp = el(id);
+  if (!inp) return;
+  inp.addEventListener('input', () => {
+    LAB.grade[inp.dataset.k] = parseFloat(inp.value);
+    const out = el(id + 'V');
+    if (out) out.textContent = inp.value;
+    applyGradePreview();
+  });
+});
+
+function makePresetFromLab(){
+  const sk = readLab();
+  const base = PRESETS.find(p => p.id === LAB.base) || PRESETS[0];
+  const g = LAB.grade;
+  const id = LAB.mine ? LAB.mine.id : ('mine_' + Date.now().toString(36));
+  return {
+    id,
+    label: sk.brand + ' · 自定义',
+    iso: base.iso,
+    ev: g.ev, contrast: g.contrast, sat: g.sat, temp: g.temp,
+    grain: g.grain, halo: base.halo, vign: g.vign, fade: g.fade,
+    shadow: base.shadow, high: base.high, mono: base.mono,
+    baseOf: base.id,
+    mine: true,
+    skin: sk
+  };
+}
+
+function labSave(){
+  const p = makePresetFromLab();
+  const idx = S.custom.findIndex(x => x.id === p.id);
+  if (idx >= 0) S.custom[idx] = p;
+  else S.custom.push(p);
+  S.current = p.id;
+  saveStore();
+  buildWheel();
+  applySkin();
+  buildFilms();
+  el('lab').classList.remove('on');
+}
+
+/* 导入 / 导出 */
+function openIO(mode){
+  S.ioMode = mode;
+  el('ioTitle').textContent = mode === 'export' ? '复制这段皮肤数据' : '把皮肤数据粘进来';
+  const txt = el('ioText');
+  if (mode === 'export'){
+    const sk = readLab();
+    txt.value = JSON.stringify(sk, null, 2);
+    txt.readOnly = true;
+  }else{
+    txt.value = '';
+    txt.readOnly = false;
+  }
+  el('ioshare').classList.add('on');
+}
+
+el('ioDo').onclick = () => {
+  if (S.ioMode === 'export'){
+    const txt = el('ioText');
+    txt.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    showWarn('已选中，直接复制就行。');
+    el('ioshare').classList.remove('on');
+  }else{
+    try{
+      const sk = JSON.parse(el('ioText').value);
+      if (!sk || !sk.body) throw new Error('格式不对');
+      LAB.skin = {
+        body: sk.body, body2: sk.body2 || sk.body, accent: sk.accent || '#e8b04b',
+        ink: sk.ink || '#efe9df', shutter: sk.shutter || '#c9483b',
+        grip: sk.grip || 'leather', font: sk.font || 'classic',
+        brand: sk.brand || 'MY CAM', model: sk.model || 'CUSTOM · 135'
+      };
+      el('inBrand').value = LAB.skin.brand;
+      el('inModel').value = LAB.skin.model;
+      el('cBody').value = LAB.skin.body;
+      el('cBody2').value = LAB.skin.body2;
+      el('cAcc').value = LAB.skin.accent;
+      el('cInk').value = LAB.skin.ink;
+      el('cShut').value = LAB.skin.shutter;
+      setSeg('segGrip', LAB.skin.grip);
+      setSeg('segFont', LAB.skin.font);
+      refreshLabPreview();
+      el('ioshare').classList.remove('on');
+      showWarn('导入好了，点保存就能用。');
+    }catch(e){
+      showWarn('这段数据读不懂，检查一下是不是复制全了。');
+    }
+  }
+};
+el('ioClose').onclick = () => el('ioshare').classList.remove('on');
+
+/* ============================================================
+   11. 交互绑定
+   ============================================================ */
+el('startBtn').onclick = () => startCamera();
+el('albumLink').onclick = (e) => { e.preventDefault(); el('file').click(); };
+el('file').onchange = (e) => {
+  handleFile(e.target.files && e.target.files[0]);
+  e.target.value = '';
+};
+el('shutter').onclick = shoot;
+
+el('flipBtn').onclick = async () => {
+  S.facing = (S.facing === 'environment') ? 'user' : 'environment';
+  if (S.stream) await startCamera();
+  else showWarn('先开启取景器，再切换镜头。');
+};
+
+el('sheetClose').onclick = closeSheet;
+el('scrim').onclick = closeSheet;
+
+el('makeBtn').onclick = () => {
+  closeSheet();
+  setTimeout(() => openLab(currentPreset()), 260);
+};
+el('labClose').onclick = () => el('lab').classList.remove('on');
+el('labSave').onclick = labSave;
+el('labExport').onclick = () => openIO('export');
+el('labImport').onclick = () => openIO('import');
+
+el('pickSave').onclick = saveSelected;
+el('pickDel').onclick = deleteSelected;
+
+/* 点取景器 → 对焦框动画 */
+vf.addEventListener('pointerdown', (e) => {
+  if (e.target.closest('.idle') || e.target.closest('.go')) return;
+  const f = el('focus');
+  const r = vf.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  f.style.left = x + 'px';
+  f.style.top = y + 'px';
+  f.classList.remove('on');
+  void f.offsetWidth;
+  f.classList.add('on');
+});
+
+/* 页面隐藏时释放摄像头，回来后自动接上 */
+document.addEventListener('visibilitychange', async () => {
+  if (document.hidden){
+    if (S.stream){ S.wasOn = true; stopCamera(); }
+  }else if (S.wasOn && !S.stream){
+    S.wasOn = false;
+    await startCamera();
+  }
+});
+
+/* ============================================================
+   12. 启动
+   ============================================================ */
+(function init(){
+  loadStore();
+  applySkin();
+  updateCounter();
+  buildWheel();
+  buildFilms();
+  refreshPick();
+
+  // 入场动画：相机从小飞近并翻转 180°，背面正好铺满整个手机
+  const intro = document.getElementById('intro');
+  const introCam = document.getElementById('introCam');
+  const INTRO_MS = 3000; // 入场动画总时长
+  const fitIntro = () => {
+    if (!introCam) return;
+    // 相机背面 320×220，算出让背面盖住整个屏幕的放大倍数
+    const f = Math.max(innerWidth / 320, innerHeight / 220) * 1.06;
+    introCam.style.setProperty('--fit', f.toFixed(3));
+  };
+  fitIntro();
+
+  // 交接层：克隆「最终会显示的真实界面」，结尾淡入后画面与操作页完全一致
+  // 横屏时克隆相机机身；竖屏时真实界面是「请把手机横过来」，就克隆它
+  const introHand = document.getElementById('introHand');
+  const realCam = document.getElementById('cam');
+  const tipEl = document.querySelector('.tip-rotate');
+  const isPortrait = () => !!(tipEl && innerHeight > innerWidth);
+  let handKind = '';
+  let handSrc = null;
+  let handClone = null;
+  const placeHand = () => {
+    if (!introHand) return;
+    const src = isPortrait() ? tipEl : realCam;
+    if (!src) return;
+    const r = src.getBoundingClientRect();
+    // 用真实界面的「布局尺寸」（不含 transform 缩放）做交接层，再套上同样的 scale
+    // 这样克隆内部字体/内边距与真实界面完全一致，而不是被整体放大后的近似
+    const w = src.offsetWidth || r.width;
+    const h = src.offsetHeight || r.height;
+    const k = w ? r.width / w : 1;
+    introHand.style.left = (r.left + r.width / 2 - w / 2) + 'px';
+    introHand.style.top = (r.top + r.height / 2 - h / 2) + 'px';
+    introHand.style.width = w + 'px';
+    introHand.style.height = h + 'px';
+    introHand.style.transform = 'scale(' + k.toFixed(4) + ')';
+  };
+  // 让克隆层里的循环动画（颗粒、旋转箭头）与真实界面同相位，交接时不会跳帧
+  const syncHandAnims = () => {
+    if (!handSrc || !handClone || !handSrc.getAnimations) return;
+    try{
+      const sa = handSrc.getAnimations({subtree:true});
+      const da = handClone.getAnimations({subtree:true});
+      for (let i = 0; i < sa.length && i < da.length; i++) da[i].currentTime = sa[i].currentTime;
+    }catch(e){}
+  };
+  const buildHand = () => {
+    if (!introHand) return;
+    const kind = isPortrait() ? 'tip' : 'cam';
+    if (kind === handKind){ placeHand(); syncHandAnims(); return; }
+    const src = kind === 'tip' ? tipEl : realCam;
+    if (!src) return;
+    handKind = kind;
+    handSrc = src;
+    introHand.innerHTML = '';
+    const clone = src.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+    clone.querySelectorAll('video').forEach(v => { try{ v.pause(); }catch(e){} });
+    handClone = clone;
+    introHand.appendChild(clone);
+    placeHand();
+    syncHandAnims();
+  };
+  buildHand();
+
+  const finish = () => {
+    if (document.body.classList.contains('ready')) return;
+    buildHand();
+    // 与真实机身 scale(1.02) → 1 同步收回
+    if (introHand) introHand.style.transform = 'scale(1)';
+    document.body.classList.add('ready');
+    if (intro && intro.parentNode){
+      intro.style.transition = 'opacity .35s ease';
+      intro.style.opacity = '0';
+      setTimeout(() => intro.remove(), 380);
+    }
+  };
+  if (intro){
+    setTimeout(finish, INTRO_MS);
+  }else{
+    document.body.classList.add('ready');
+  }
+
+  // 任意首次用户手势后尝试锁横屏（iOS Safari 不支持，但 Android 可以）
+  const firstLock = () => {
+    try{
+      const so = screen.orientation;
+      if (so && so.lock){
+        if (!document.fullscreenElement){
+          document.documentElement.requestFullscreen?.().then(
+            () => so.lock?.('landscape').catch(()=>{}), ()=>{});
+        }
+      }
+    }catch(e){}
+    document.removeEventListener('pointerdown', firstLock, true);
+    document.removeEventListener('touchstart', firstLock, true);
+  };
+  document.addEventListener('pointerdown', firstLock, true);
+  document.addEventListener('touchstart', firstLock, true);
+
+  let rTimer, lastW = innerWidth;
+  window.addEventListener('resize', () => {
+    fitIntro();
+    buildHand();
+    // 只有宽度变了才需要重新对位波轮；全屏/地址栏引起的纯高度变化不打断滑动
+    if (innerWidth === lastW) return;
+    lastW = innerWidth;
+    clearTimeout(rTimer);
+    rTimer = setTimeout(syncWheel, 200);
+  });
+
+  // 有摄像头就默认展示「开启」按钮，避免自动弹权限
+  const hasCam = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  if (!hasCam){
+    el('idle').querySelector('p').textContent = '这个浏览器没法直接开摄像头';
+    el('startBtn').textContent = '从相册选一张';
+    el('startBtn').onclick = () => el('file').click();
+    el('albumLink').textContent = '先看看胶片效果';
+    el('albumLink').onclick = (e) => e.preventDefault();
+  }
+})();
+</script>
+</body>
+</html>
